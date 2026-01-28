@@ -25,9 +25,15 @@ export default async function DashboardLayout({
 
   const navItems = role === ROLES.ADMIN ? adminNavConfig : studentNavConfig;
 
+  const sidebarUser = {
+    name: session.user.name || "",
+    email: session.user.email,
+    avatar: session.user.image || "",
+  };
+
   return (
     <SidebarProvider>
-      <AppSidebar navItems={navItems} user={session.user} />
+      <AppSidebar navItems={navItems} user={sidebarUser} />
 
       <SidebarInset>
         {/* Header */}
