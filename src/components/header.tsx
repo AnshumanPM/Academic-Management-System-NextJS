@@ -34,12 +34,16 @@ export const HeroHeader = () => {
 
   const buttons = session
     ? [
-        { href: "/dashboard/profile", label: "Profile", variant: "outline" },
-        { href: "/dashboard", label: "Dashboard" },
+        {
+          href: "/dashboard/profile",
+          label: "Profile",
+          variant: "outline" as const,
+        },
+        { href: "/dashboard", label: "Dashboard", variant: undefined },
       ]
     : [
-        { href: "/auth/login", label: "Login", variant: "outline" },
-        { href: "/auth/signup", label: "Sign Up" },
+        { href: "/auth/login", label: "Login", variant: "outline" as const },
+        { href: "/auth/signup", label: "Sign Up", variant: undefined },
       ];
 
   return (

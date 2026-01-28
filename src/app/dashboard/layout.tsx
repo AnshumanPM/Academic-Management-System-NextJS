@@ -12,6 +12,8 @@ import { adminNavConfig, studentNavConfig } from "@/lib/nav-config";
 import { Separator } from "@/components/ui/separator";
 import { DashboardBreadcrumb } from "@/components/dashboard-breadcrumb";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
 }: {
