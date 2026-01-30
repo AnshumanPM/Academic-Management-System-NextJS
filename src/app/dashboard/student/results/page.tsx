@@ -145,9 +145,7 @@ export default function Results() {
 
   return (
     <div className="flex w-full flex-col px-4 py-6">
-      <h1 className="mb-6 text-center text-2xl font-bold">
-        SCTEVT Student Result
-      </h1>
+      <h1 className="mb-6 text-center text-2xl font-bold">Student Result</h1>
 
       <div className="flex w-full flex-col items-center gap-4 md:flex-row md:justify-center">
         <div className="w-full md:max-w-xs">

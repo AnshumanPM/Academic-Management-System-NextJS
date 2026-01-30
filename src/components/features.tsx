@@ -1,34 +1,38 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Settings2, Sparkles, Zap } from "lucide-react";
+import { BarChart3, BookOpen, Users } from "lucide-react";
 import { ReactNode } from "react";
 
 export default function Features() {
   return (
-    <section className="bg-zinc-50 py-16 md:py-32 dark:bg-transparent">
+    <section
+      className="bg-zinc-50 py-16 md:py-32 dark:bg-transparent"
+      id="features"
+    >
       <div className="@container mx-auto max-w-5xl px-6">
         <div className="text-center">
           <h2 className="text-balance text-4xl font-semibold lg:text-5xl">
-            Built to cover your needs
+            Everything You Need in One Platform
           </h2>
           <p className="mt-4">
-            Libero sapiente aliquam quibusdam aspernatur, praesentium iusto
-            repellendus.
+            Powerful tools designed to transform how educational institutions
+            operate.
           </p>
         </div>
         <div className="@min-4xl:max-w-full @min-4xl:grid-cols-3 mx-auto mt-8 grid max-w-sm gap-6 *:text-center md:mt-16">
           <Card className="group bg-background">
             <CardHeader className="pb-3">
               <CardDecorator>
-                <Zap className="size-6" aria-hidden />
+                <Users className="size-6" aria-hidden />
               </CardDecorator>
 
-              <h3 className="mt-6 font-medium">Customizable</h3>
+              <h3 className="mt-6 font-medium">Dual Panel Experience</h3>
             </CardHeader>
 
             <CardContent>
               <p className="text-sm">
-                Extensive customization options, allowing you to tailor every
-                aspect to meet your specific needs.
+                Dedicated student and admin interfaces with role-specific
+                features. Students access grades and schedules while admins
+                control everything from one dashboard.
               </p>
             </CardContent>
           </Card>
@@ -36,16 +40,17 @@ export default function Features() {
           <Card className="group bg-background">
             <CardHeader className="pb-3">
               <CardDecorator>
-                <Settings2 className="size-6" aria-hidden />
+                <BarChart3 className="size-6" aria-hidden />
               </CardDecorator>
 
-              <h3 className="mt-6 font-medium">You have full control</h3>
+              <h3 className="mt-6 font-medium">Live Performance Insights</h3>
             </CardHeader>
 
             <CardContent>
               <p className="mt-3 text-sm">
-                From design elements to functionality, you have complete control
-                to create a unique and personalized experience.
+                Real-time analytics and visual dashboards that track attendance,
+                grades, and institutional metrics. Make data-driven decisions
+                instantly.
               </p>
             </CardContent>
           </Card>
@@ -53,16 +58,16 @@ export default function Features() {
           <Card className="group bg-background">
             <CardHeader className="pb-3">
               <CardDecorator>
-                <Sparkles className="size-6" aria-hidden />
+                <BookOpen className="size-6" aria-hidden />
               </CardDecorator>
 
-              <h3 className="mt-6 font-medium">Powered By AI</h3>
+              <h3 className="mt-6 font-medium">Complete Academic Control</h3>
             </CardHeader>
 
             <CardContent>
               <p className="mt-3 text-sm">
-                Elements to functionality, you have complete control to create a
-                unique experience.
+                Manage attendance, grades, assignments, exams, and communication
+                from a single platform. Everything synced and accessible 24/7.
               </p>
             </CardContent>
           </Card>

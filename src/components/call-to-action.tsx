@@ -7,9 +7,12 @@ export default function CallToAction() {
       <div className="mx-auto max-w-5xl px-6">
         <div className="text-center">
           <h2 className="text-balance text-4xl font-semibold lg:text-5xl">
-            Start Building
+            Ready to Transform Your Institution?
           </h2>
-          <p className="mt-4">Libero sapiente aliquam quibusdam aspernatur.</p>
+          <p className="mt-4">
+            Join hundreds of institutions already using our platform to
+            streamline their academic operations.
+          </p>
 
           <div className="mt-12 flex flex-wrap justify-center gap-4">
             <Button asChild size="lg">
@@ -20,7 +23,7 @@ export default function CallToAction() {
 
             <Button asChild size="lg" variant="outline">
               <Link href="/">
-                <span>Book Demo</span>
+                <span>Schedule a Demo</span>
               </Link>
             </Button>
           </div>

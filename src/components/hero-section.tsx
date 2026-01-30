@@ -68,7 +68,7 @@ export default function HeroSection() {
               className="mask-b-from-35% mask-b-to-90% absolute inset-0 top-56 -z-20 lg:top-32"
             >
               <Image
-                src="/hero-bg-light.png"
+                src="/assets/night-background.png"
                 alt="background"
                 className="hidden size-full dark:block"
                 width="3276"
@@ -83,7 +83,7 @@ export default function HeroSection() {
 
             <div className="mx-auto max-w-7xl px-6">
               <div className="text-center sm:mx-auto lg:mr-auto lg:mt-0">
-                <AnimatedGroup variants={transitionVariants}>
+                {/* <AnimatedGroup variants={transitionVariants}>
                   <Link
                     href="#link"
                     className="hover:bg-background dark:hover:border-t-border bg-muted group mx-auto flex w-fit items-center gap-4 rounded-full border p-1 pl-4 shadow-md shadow-zinc-950/5 transition-colors duration-300 dark:border-t-white/5 dark:shadow-zinc-950"
@@ -92,6 +92,7 @@ export default function HeroSection() {
                       Introducing Support for AI Models
                     </span>
                     <span className="dark:border-background block h-4 w-0.5 border-l bg-white dark:bg-zinc-700"></span>
+
 
                     <div className="bg-background group-hover:bg-muted size-6 overflow-hidden rounded-full duration-500">
                       <div className="flex w-12 -translate-x-1/2 duration-500 ease-in-out group-hover:translate-x-0">
@@ -104,7 +105,7 @@ export default function HeroSection() {
                       </div>
                     </div>
                   </Link>
-                </AnimatedGroup>
+                </AnimatedGroup> */}
 
                 <TextEffect
                   preset="fade-in-blur"
@@ -112,7 +113,7 @@ export default function HeroSection() {
                   as="h1"
                   className="mx-auto mt-8 max-w-4xl text-balance text-5xl max-md:font-semibold md:text-7xl lg:mt-16 xl:text-[5.25rem]"
                 >
-                  Modern Solutions for Customer Engagement
+                  Complete Academic Management Solution
                 </TextEffect>
                 <TextEffect
                   per="line"
@@ -122,8 +123,9 @@ export default function HeroSection() {
                   as="p"
                   className="mx-auto mt-8 max-w-2xl text-balance text-lg"
                 >
-                  Highly customizable components for building modern websites
-                  and applications that look and feel the way you mean it.
+                  End-to-end platform for seamless academic operations with
+                  dedicated student and admin panels for efficient institution
+                  management.
                 </TextEffect>
 
                 <AnimatedGroup
@@ -149,8 +151,8 @@ export default function HeroSection() {
                       size="lg"
                       className="rounded-xl px-5 text-base"
                     >
-                      <Link href="#link">
-                        <span className="text-nowrap">Start Building</span>
+                      <Link href="/dashboard">
+                        <span className="text-nowrap">Get Started</span>
                       </Link>
                     </Button>
                   </div>
@@ -161,8 +163,8 @@ export default function HeroSection() {
                     variant="ghost"
                     className="h-10.5 rounded-xl px-5"
                   >
-                    <Link href="#link">
-                      <span className="text-nowrap">Request a demo</span>
+                    <Link href="#features">
+                      <span className="text-nowrap">Explore Features</span>
                     </Link>
                   </Button>
                 </AnimatedGroup>

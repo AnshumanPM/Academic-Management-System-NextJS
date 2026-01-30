@@ -14,11 +14,12 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
+import Link from "next/link";
 
 interface NavItem {
   title: string;
   url: string;
-  icon?: string; // String instead of component
+  icon?: string;
   isActive?: boolean;
   items?: {
     title: string;
@@ -45,10 +46,10 @@ export function AppSidebar({ navItems, user, ...props }: AppSidebarProps) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
+              <Link href="/">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
-              </a>
+                <span className="text-base font-semibold">Academy</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
