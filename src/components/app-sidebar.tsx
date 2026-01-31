@@ -1,7 +1,7 @@
 // components/app-sidebar.tsx
 "use client";
 import * as React from "react";
-import { IconInnerShadowTop } from "@tabler/icons-react";
+import { IconSchool } from "@tabler/icons-react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import {
@@ -47,7 +47,7 @@ export function AppSidebar({ navItems, user, ...props }: AppSidebarProps) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <Link href="/">
-                <IconInnerShadowTop className="!size-5" />
+                <IconSchool className="!size-5" />
                 <span className="text-base font-semibold">Academy</span>
               </Link>
             </SidebarMenuButton>

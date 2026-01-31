@@ -12,7 +12,7 @@ export default function DashboardFooter() {
             href="https://github.com/AnshumanPM"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-primary duration-150 font-medium"
+            className="hover:text-primary duration-150 font-bold"
           >
             AnshumanPM
           </Link>

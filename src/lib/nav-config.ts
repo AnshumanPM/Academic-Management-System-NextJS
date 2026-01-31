@@ -34,7 +34,7 @@ export const studentNavConfig = [
   {
     title: "Student",
     url: "/dashboard/student",
-    icon: "GraduationCap",
+    icon: "User",
     isActive: true,
     items: [
       { title: "Results", url: "/dashboard/student/results" },
