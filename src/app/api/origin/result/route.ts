@@ -51,7 +51,14 @@ async function getOriginResData(
 
 export async function POST(request: NextRequest) {
   try {
-    await authSession();
+    const session = await authSession();
+
+    if (!session) {
+      return NextResponse.json(
+        { status: 401, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
 
     const body = await request.json();
 
@@ -85,19 +92,6 @@ export async function POST(request: NextRequest) {
     }
   } catch (e) {
     const errorMessage = e instanceof Error ? e.message : String(e);
-
-    if (
-      errorMessage.includes("Unauthorized") ||
-      errorMessage.includes("Authentication failed")
-    ) {
-      return NextResponse.json(
-        {
-          status: 401,
-          message: "Unauthorized: Please sign in to access this resource",
-        },
-        { status: 401 },
-      );
-    }
 
     return NextResponse.json(
       { status: 400, message: `Error: ${errorMessage}` },
