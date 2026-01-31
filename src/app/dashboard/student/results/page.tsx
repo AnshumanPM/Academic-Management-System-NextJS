@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import axios from "axios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -117,19 +118,18 @@ export default function Results() {
     setError(null);
 
     try {
-      const response = await fetch(
-        "https://resultapi.anshumanpm.in/api/extorigininfocse",
+      const response = await axios.post(
+        "/api/origin/result",
+        { regd, sem, examCode },
         {
-          method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include",
-          body: JSON.stringify({ regd, sem, examCode }),
+          withCredentials: true,
         },
       );
 
-      const data = await response.json();
+      const data = response.data;
 
       if (data.status === 200) {
         setResultData(data.data);
