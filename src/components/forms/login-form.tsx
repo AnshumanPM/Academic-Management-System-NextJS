@@ -67,8 +67,14 @@ export function LoginForm({
     const initOneTap = async () => {
       try {
         await authClient.oneTap({
-          callbackURL: "/dashboard",
-          context: "signin",
+          fetchOptions: {
+            headers: {
+              "Referrer-Policy": "no-referrer-when-downgrade",
+            },
+            onSuccess: () => {
+              router.push("/dashboard");
+            },
+          },
         });
       } catch (error) {
         console.error("Google One Tap initialization failed:", error);
