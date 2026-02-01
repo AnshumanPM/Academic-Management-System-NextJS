@@ -144,7 +144,7 @@ export default function Results() {
   };
 
   return (
-    <div className="flex w-full flex-col px-4 py-6">
+    <div className="flex w-full flex-col px-2 py-4">
       <h1 className="mb-6 text-center text-2xl font-bold">Student Result</h1>
 
       <div className="flex w-full flex-col items-center gap-4 md:flex-row md:justify-center">
@@ -217,7 +217,7 @@ export default function Results() {
       )}
 
       {resultData && (
-        <div className="my-6 flex flex-col gap-y-6">
+        <div className="mt-6 flex flex-col gap-y-6">
           {/* Student Image */}
           <div className="flex justify-center">
             <Avatar className="h-28 w-28 ring-2 ring-primary ring-offset-2 ring-offset-background">
@@ -352,11 +352,11 @@ export default function Results() {
             </TableFooter>
           </Table>
 
-          <div className="w-full text-center">
+          {/* <div className="w-full text-center">
             <p className="text-xs text-muted-foreground">
               *All information shown here is based on the SCTEVT Result API.
             </p>
-          </div>
+          </div> */}
         </div>
       )}
     </div>

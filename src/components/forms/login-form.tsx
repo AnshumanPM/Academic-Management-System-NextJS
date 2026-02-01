@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -60,8 +60,22 @@ export function LoginForm({
       email: "",
       password: "",
     },
-    mode: "onBlur", // Validate on blur for better UX
+    mode: "onBlur",
   });
+
+  useEffect(() => {
+    const initOneTap = async () => {
+      try {
+        await authClient.oneTap({
+          callbackURL: "/dashboard",
+        });
+      } catch (error) {
+        console.error("Google One Tap initialization failed:", error);
+      }
+    };
+
+    initOneTap();
+  }, []);
 
   const handleSocialSignIn = async (
     provider: "google" | "github",

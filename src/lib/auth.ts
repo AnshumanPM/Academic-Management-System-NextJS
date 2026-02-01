@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
-import { lastLoginMethod, admin, username } from "better-auth/plugins";
+import { lastLoginMethod, admin, username, oneTap } from "better-auth/plugins";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { createAuthMiddleware, APIError } from "better-auth/api";
 import { Resend } from "resend";
@@ -18,27 +18,27 @@ export const auth = betterAuth({
     requireEmailVerification: true,
     sendResetPassword: async ({ user, url }) => {
       console.log("Reset password URL:", url);
-      // await resend.emails.send({
-      //   from: `${process.env.EMAIL_SENDER_NAME} <${process.env.EMAIL_SENDER_ADDRESS}>`,
-      //   to: user.email,
-      //   subject: "Reset your password",
-      //   react: ForgotPasswordEmail({
-      //     username: user.name,
-      //     resetUrl: url,
-      //     userEmail: user.email,
-      //   }),
-      // });
+      await resend.emails.send({
+        from: `${process.env.EMAIL_SENDER_NAME} <${process.env.EMAIL_SENDER_ADDRESS}>`,
+        to: user.email,
+        subject: "Reset your password",
+        react: ForgotPasswordEmail({
+          username: user.name,
+          resetUrl: url,
+          userEmail: user.email,
+        }),
+      });
     },
   },
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
       console.log("Verify email URL:", url);
-      // await resend.emails.send({
-      //   from: `${process.env.EMAIL_SENDER_NAME} <${process.env.EMAIL_SENDER_ADDRESS}>`,
-      //   to: user.email,
-      //   subject: "Verify your email",
-      //   react: VerifyEmail({ username: user.name, verifyUrl: url }),
-      // });
+      await resend.emails.send({
+        from: `${process.env.EMAIL_SENDER_NAME} <${process.env.EMAIL_SENDER_ADDRESS}>`,
+        to: user.email,
+        subject: "Verify your email",
+        react: VerifyEmail({ username: user.name, verifyUrl: url }),
+      });
     },
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
@@ -78,6 +78,7 @@ export const auth = betterAuth({
     }),
     username(),
     lastLoginMethod(),
+    oneTap(),
     nextCookies(),
   ],
 });

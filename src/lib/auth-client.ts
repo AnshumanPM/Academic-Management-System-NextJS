@@ -3,6 +3,7 @@ import {
   adminClient,
   usernameClient,
   lastLoginMethodClient,
+  oneTapClient,
 } from "better-auth/client/plugins";
 import { ac, roleObjects } from "@/lib/permissions";
 
@@ -15,5 +16,11 @@ export const authClient = createAuthClient({
     }),
     usernameClient(),
     lastLoginMethodClient(),
+    oneTapClient({
+      clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+      context: "signin",
+      autoSelect: true,
+      cancelOnTapOutside: true,
+    }),
   ],
 });
