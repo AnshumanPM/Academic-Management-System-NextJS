@@ -127,7 +127,7 @@ export default function Footer() {
             href="https://github.com/AnshumanPM"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-primary duration-150 font-bold"
+            className="hover:text-primary font-bold duration-150"
           >
             AnshumanPM
           </Link>

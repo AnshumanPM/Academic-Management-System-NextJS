@@ -125,8 +125,8 @@ export function ResetPasswordForm({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center">
-              <p className="text-sm text-destructive">
+            <div className="border-destructive/50 bg-destructive/10 rounded-lg border p-4 text-center">
+              <p className="text-destructive text-sm">
                 The reset link you followed is either invalid, expired, or has
                 already been used.
               </p>
@@ -144,7 +144,7 @@ export function ResetPasswordForm({
             <div className="text-center text-sm">
               Remember your password?{" "}
               <Link
-                className="underline underline-offset-4 hover:text-primary"
+                className="hover:text-primary underline underline-offset-4"
                 href="/auth/login"
               >
                 Sign in
@@ -170,7 +170,7 @@ export function ResetPasswordForm({
         <CardContent>
           {resetSuccess ? (
             <div className="space-y-4">
-              <div className="flex flex-col items-center gap-4 rounded-lg border border-muted bg-muted/50 p-6 text-center">
+              <div className="border-muted bg-muted/50 flex flex-col items-center gap-4 rounded-lg border p-6 text-center">
                 <div className="flex size-12 items-center justify-center rounded-full bg-green-500/10">
                   <CheckCircle2 className="size-6 text-green-600 dark:text-green-500" />
                 </div>
@@ -219,7 +219,7 @@ export function ResetPasswordForm({
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition-colors"
                             tabIndex={-1}
                             disabled={isLoading}
                           >
@@ -261,7 +261,7 @@ export function ResetPasswordForm({
                             onClick={() =>
                               setShowConfirmPassword(!showConfirmPassword)
                             }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition-colors"
                             tabIndex={-1}
                             disabled={isLoading}
                           >
@@ -292,7 +292,7 @@ export function ResetPasswordForm({
                 <div className="text-center text-sm">
                   Remember your password?{" "}
                   <Link
-                    className="underline underline-offset-4 hover:text-primary"
+                    className="hover:text-primary underline underline-offset-4"
                     href="/auth/login"
                   >
                     Sign in
@@ -304,18 +304,18 @@ export function ResetPasswordForm({
         </CardContent>
       </Card>
 
-      <div className="text-balance text-center text-xs text-muted-foreground">
+      <div className="text-muted-foreground text-center text-xs text-balance">
         By resetting your password, you agree to our{" "}
         <Link
           href="/terms"
-          className="underline underline-offset-4 hover:text-primary"
+          className="hover:text-primary underline underline-offset-4"
         >
           Terms of Service
         </Link>{" "}
         and{" "}
         <Link
           href="/privacy"
-          className="underline underline-offset-4 hover:text-primary"
+          className="hover:text-primary underline underline-offset-4"
         >
           Privacy Policy
         </Link>

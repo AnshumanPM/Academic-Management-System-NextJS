@@ -5,14 +5,14 @@ export default function DashboardFooter() {
   return (
     <footer className="w-full">
       <Separator />
-      <div className="flex justify-center py-4 text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex justify-center py-4 text-sm">
         <p>
           Crafted by{" "}
           <Link
             href="https://github.com/AnshumanPM"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-primary duration-150 font-bold"
+            className="hover:text-primary font-bold duration-150"
           >
             AnshumanPM
           </Link>

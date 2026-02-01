@@ -186,8 +186,8 @@ export function LoginForm({
             </div>
 
             {/* Divider */}
-            <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-              <span className="relative z-10 bg-card px-2 text-muted-foreground">
+            <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+              <span className="bg-card text-muted-foreground relative z-10 px-2">
                 Or continue with email
               </span>
             </div>
@@ -251,7 +251,7 @@ export function LoginForm({
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition-colors"
                             tabIndex={-1}
                             disabled={isLoading}
                           >
@@ -289,7 +289,7 @@ export function LoginForm({
             <div className="text-center text-sm">
               Don&apos;t have an account?{" "}
               <Link
-                className="underline underline-offset-4 hover:text-primary"
+                className="hover:text-primary underline underline-offset-4"
                 href="/auth/signup"
               >
                 Sign up
@@ -300,18 +300,18 @@ export function LoginForm({
       </Card>
 
       {/* Terms and Privacy */}
-      <div className="text-balance text-center text-xs text-muted-foreground">
+      <div className="text-muted-foreground text-center text-xs text-balance">
         By clicking continue, you agree to our{" "}
         <Link
           href="/terms"
-          className="underline underline-offset-4 hover:text-primary"
+          className="hover:text-primary underline underline-offset-4"
         >
           Terms of Service
         </Link>{" "}
         and{" "}
         <Link
           href="/privacy"
-          className="underline underline-offset-4 hover:text-primary"
+          className="hover:text-primary underline underline-offset-4"
         >
           Privacy Policy
         </Link>

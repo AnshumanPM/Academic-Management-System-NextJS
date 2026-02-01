@@ -220,7 +220,7 @@ export default function Results() {
         <div className="mt-6 flex flex-col gap-y-6">
           {/* Student Image */}
           <div className="flex justify-center">
-            <Avatar className="h-28 w-28 ring-2 ring-primary ring-offset-2 ring-offset-background">
+            <Avatar className="ring-primary ring-offset-background h-28 w-28 ring-2 ring-offset-2">
               <AvatarImage
                 src={`https://sctevt-res-proxy.anshumanpm.eu.org/images/StudPhoto/${resultData.studentInfo.photo}`}
                 alt={resultData.studentInfo.studentName}
@@ -236,63 +236,63 @@ export default function Results() {
           </div>
 
           {/* Student Information */}
-          <Table className="table-fixed border border-border">
+          <Table className="border-border table-fixed border">
             <TableBody>
               <TableRow>
-                <TableCell className="w-1/2 border border-border font-bold whitespace-normal break-words">
+                <TableCell className="border-border w-1/2 border font-bold break-words whitespace-normal">
                   Registration Number
                 </TableCell>
-                <TableCell className="w-1/2 border border-border whitespace-normal break-words">
+                <TableCell className="border-border w-1/2 border break-words whitespace-normal">
                   {resultData.studentInfo.registrationNumber}
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="w-1/2 border border-border font-bold whitespace-normal break-words">
+                <TableCell className="border-border w-1/2 border font-bold break-words whitespace-normal">
                   Student Name
                 </TableCell>
-                <TableCell className="w-1/2 border border-border whitespace-normal break-words">
+                <TableCell className="border-border w-1/2 border break-words whitespace-normal">
                   {resultData.studentInfo.studentName}
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="w-1/2 border border-border font-bold whitespace-normal break-words">
+                <TableCell className="border-border w-1/2 border font-bold break-words whitespace-normal">
                   Date of Birth
                 </TableCell>
-                <TableCell className="w-1/2 border border-border whitespace-normal break-words">
+                <TableCell className="border-border w-1/2 border break-words whitespace-normal">
                   {new Date(resultData.studentInfo.dob).toLocaleDateString(
                     "en-IN",
                   )}
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="w-1/2 border border-border font-bold whitespace-normal break-words">
+                <TableCell className="border-border w-1/2 border font-bold break-words whitespace-normal">
                   Gender
                 </TableCell>
-                <TableCell className="w-1/2 border border-border whitespace-normal break-words">
+                <TableCell className="border-border w-1/2 border break-words whitespace-normal">
                   {resultData.studentInfo.gender === "M" ? "Male" : "Female"}
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="w-1/2 border border-border font-bold whitespace-normal break-words">
+                <TableCell className="border-border w-1/2 border font-bold break-words whitespace-normal">
                   Branch Name
                 </TableCell>
-                <TableCell className="w-1/2 border border-border whitespace-normal break-words">
+                <TableCell className="border-border w-1/2 border break-words whitespace-normal">
                   {resultData.studentInfo.courseName}
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="w-1/2 border border-border font-bold whitespace-normal break-words">
+                <TableCell className="border-border w-1/2 border font-bold break-words whitespace-normal">
                   College Name
                 </TableCell>
-                <TableCell className="w-1/2 border border-border whitespace-normal break-words">
+                <TableCell className="border-border w-1/2 border break-words whitespace-normal">
                   {resultData.studentInfo.instituteName}
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="w-1/2 border border-border font-bold whitespace-normal break-words">
+                <TableCell className="border-border w-1/2 border font-bold break-words whitespace-normal">
                   Exam Type
                 </TableCell>
-                <TableCell className="w-1/2 border border-border whitespace-normal break-words">
+                <TableCell className="border-border w-1/2 border break-words whitespace-normal">
                   {resultData.examTypeCode === "R" ? "Regular" : "Ex-Regular"}
                 </TableCell>
               </TableRow>
@@ -300,19 +300,19 @@ export default function Results() {
           </Table>
 
           {/* Marks Table */}
-          <Table className="table-fixed border border-border">
+          <Table className="border-border table-fixed border">
             <TableHeader>
               <TableRow className="bg-muted">
-                <TableHead className="w-1/2 border border-border font-bold whitespace-normal break-words">
+                <TableHead className="border-border w-1/2 border font-bold break-words whitespace-normal">
                   Subject
                 </TableHead>
-                <TableHead className="w-1/6 border border-border text-center font-bold whitespace-normal break-words">
+                <TableHead className="border-border w-1/6 border text-center font-bold break-words whitespace-normal">
                   TH
                 </TableHead>
-                <TableHead className="w-1/6 border border-border text-center font-bold whitespace-normal break-words">
+                <TableHead className="border-border w-1/6 border text-center font-bold break-words whitespace-normal">
                   IA
                 </TableHead>
-                <TableHead className="w-1/6 border border-border text-center font-bold whitespace-normal break-words">
+                <TableHead className="border-border w-1/6 border text-center font-bold break-words whitespace-normal">
                   Total
                 </TableHead>
               </TableRow>
@@ -322,16 +322,16 @@ export default function Results() {
                 .sort((a, b) => a.sortingOrder - b.sortingOrder)
                 .map((subject) => (
                   <TableRow key={subject.sortingOrder}>
-                    <TableCell className="w-1/2 border border-border whitespace-normal break-words">
+                    <TableCell className="border-border w-1/2 border break-words whitespace-normal">
                       {subject.subjectName}
                     </TableCell>
-                    <TableCell className="w-1/6 border border-border text-center whitespace-normal break-words">
+                    <TableCell className="border-border w-1/6 border text-center break-words whitespace-normal">
                       {subject.securedTH ?? "-"}
                     </TableCell>
-                    <TableCell className="w-1/6 border border-border text-center whitespace-normal break-words">
+                    <TableCell className="border-border w-1/6 border text-center break-words whitespace-normal">
                       {subject.securedIA ?? "-"}
                     </TableCell>
-                    <TableCell className="w-1/6 border border-border text-center whitespace-normal break-words">
+                    <TableCell className="border-border w-1/6 border text-center break-words whitespace-normal">
                       {subject.securedTotal}
                     </TableCell>
                   </TableRow>
@@ -339,12 +339,12 @@ export default function Results() {
             </TableBody>
             <TableFooter>
               <TableRow className="bg-muted">
-                <TableCell className="w-1/2 border border-border font-bold whitespace-normal break-words">
+                <TableCell className="border-border w-1/2 border font-bold break-words whitespace-normal">
                   Result
                 </TableCell>
                 <TableCell
                   colSpan={3}
-                  className="w-1/2 border border-border text-center font-bold whitespace-normal break-words"
+                  className="border-border w-1/2 border text-center font-bold break-words whitespace-normal"
                 >
                   {resultData.result}
                 </TableCell>
@@ -352,11 +352,11 @@ export default function Results() {
             </TableFooter>
           </Table>
 
-          {/* <div className="w-full text-center">
-            <p className="text-xs text-muted-foreground">
+          <div className="w-full text-center">
+            <p className="text-muted-foreground text-xs">
               *All information shown here is based on the SCTEVT Result API.
             </p>
-          </div> */}
+          </div>
         </div>
       )}
     </div>

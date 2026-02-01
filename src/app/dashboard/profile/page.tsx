@@ -36,11 +36,11 @@ export default async function Profile() {
                   .toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 min-w-0">
-              <CardTitle className="break-all overflow-wrap text-2xl">
+            <div className="min-w-0 flex-1">
+              <CardTitle className="overflow-wrap text-2xl break-all">
                 {user.name}
               </CardTitle>
-              <p className="break-all text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm break-all">
                 {user.email}
               </p>
               {user.emailVerified && (
@@ -66,14 +66,14 @@ export default async function Profile() {
           <div className="grid gap-4 break-words sm:grid-cols-2">
             {user.username && (
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-muted-foreground text-sm font-medium">
                   Username
                 </p>
                 <p className="text-sm">{user.username}</p>
               </div>
             )}
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
+              <p className="text-muted-foreground text-sm font-medium">
                 Account Created
               </p>
               <p className="flex items-center gap-2 text-sm">
@@ -82,7 +82,7 @@ export default async function Profile() {
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
+              <p className="text-muted-foreground text-sm font-medium">
                 Last Login
               </p>
               <p className="flex items-center gap-2 text-sm">
@@ -91,7 +91,7 @@ export default async function Profile() {
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
+              <p className="text-muted-foreground text-sm font-medium">
                 IP Address
               </p>
               <p className="flex items-center gap-2 font-mono text-sm">
@@ -102,15 +102,15 @@ export default async function Profile() {
           </div>
 
           {user.banned && (
-            <div className="mt-4 rounded-lg border border-destructive bg-destructive/10 p-4">
-              <p className="font-semibold text-destructive">Account Banned</p>
+            <div className="border-destructive bg-destructive/10 mt-4 rounded-lg border p-4">
+              <p className="text-destructive font-semibold">Account Banned</p>
               {user.banReason && (
-                <p className="mt-1 text-sm text-destructive">
+                <p className="text-destructive mt-1 text-sm">
                   Reason: {user.banReason}
                 </p>
               )}
               {user.banExpires && (
-                <p className="mt-1 text-sm text-destructive">
+                <p className="text-destructive mt-1 text-sm">
                   Expires: {formatDate(user.banExpires)}
                 </p>
               )}

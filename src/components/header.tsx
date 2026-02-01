@@ -86,7 +86,7 @@ export const HeroHeader = () => {
             <div className="flex items-center gap-2">
               <ThemeToggle />
 
-              <div className="hidden lg:flex items-center gap-3">
+              <div className="hidden items-center gap-3 lg:flex">
                 {buttons.map((btn) => (
                   <Button
                     key={btn.href}
@@ -111,15 +111,15 @@ export const HeroHeader = () => {
               <button
                 onClick={() => setMenuState(!menuState)}
                 aria-label={menuState ? "Close Menu" : "Open Menu"}
-                className="lg:hidden relative -m-2.5 p-2.5"
+                className="relative -m-2.5 p-2.5 lg:hidden"
               >
-                <Menu className="in-data-[state=active]:scale-0 duration-200 size-6" />
-                <X className="absolute inset-0 m-auto scale-0 in-data-[state=active]:scale-100 duration-200 size-6" />
+                <Menu className="size-6 duration-200 in-data-[state=active]:scale-0" />
+                <X className="absolute inset-0 m-auto size-6 scale-0 duration-200 in-data-[state=active]:scale-100" />
               </button>
             </div>
           </div>
 
-          <div className="bg-background in-data-[state=active]:block hidden lg:hidden mt-4 rounded-3xl border p-6">
+          <div className="bg-background mt-4 hidden rounded-3xl border p-6 in-data-[state=active]:block lg:hidden">
             {/* {session && (
               <ul className="space-y-6 text-base">
                 {menuItems.map((item) => (
