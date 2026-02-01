@@ -68,6 +68,7 @@ export function LoginForm({
       try {
         await authClient.oneTap({
           callbackURL: "/dashboard",
+          context: "signin",
         });
       } catch (error) {
         console.error("Google One Tap initialization failed:", error);
