@@ -63,26 +63,26 @@ export function LoginForm({
     mode: "onBlur",
   });
 
-  useEffect(() => {
-    const initOneTap = async () => {
-      try {
-        await authClient.oneTap({
-          fetchOptions: {
-            headers: {
-              "Referrer-Policy": "no-referrer-when-downgrade",
-            },
-            onSuccess: () => {
-              router.push("/dashboard");
-            },
-          },
-        });
-      } catch (error) {
-        console.error("Google One Tap initialization failed:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const initOneTap = async () => {
+  //     try {
+  //       await authClient.oneTap({
+  //         fetchOptions: {
+  //           headers: {
+  //             "Referrer-Policy": "no-referrer-when-downgrade",
+  //           },
+  //           onSuccess: () => {
+  //             router.push("/dashboard");
+  //           },
+  //         },
+  //       });
+  //     } catch (error) {
+  //       console.error("Google One Tap initialization failed:", error);
+  //     }
+  //   };
 
-    initOneTap();
-  }, []);
+  //   initOneTap();
+  // }, []);
 
   const handleSocialSignIn = async (
     provider: "google" | "github",
