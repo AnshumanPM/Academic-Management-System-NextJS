@@ -9,6 +9,7 @@ import VerifyEmail from "@/components/emails/verify-email";
 import { db } from "@/db/drizzle";
 import { schema } from "@/db/schema";
 import { ac, roleObjects, ROLES } from "@/lib/permissions";
+import { sendTelegramMessage } from "@/lib/helper";
 
 const resend = new Resend(process.env.RESEND_API_KEY as string);
 
@@ -68,6 +69,38 @@ export const auth = betterAuth({
         });
       }
     }),
+    // after: createAuthMiddleware(async (ctx) => {
+    //   if (ctx.path.startsWith("/sign-up")) {
+    //     const newSession = ctx.context.newSession;
+    //     if (newSession) {
+    //       const user = newSession.user;
+    //       const imageLink = user.image
+    //         ? `<a href="${user.image}">Here</a>`
+    //         : "No image";
+    //       const message = `<b>New Signup</b>\n\n<b>Name:</b> ${user.name}\n<b>Email:</b> ${user.email}\n<b>Picture:</b> ${imageLink}`;
+    //       await sendTelegramMessage(message);
+    //     }
+    //   }
+
+    //   if (ctx.path.startsWith("/sign-in")) {
+    //     const newSession = ctx.context.newSession;
+    //     if (newSession) {
+    //       const user = newSession.user;
+    //       const imageLink = user.image
+    //         ? `<a href="${user.image}">Here</a>`
+    //         : "No image";
+    //       const message = `<b>New Sign In</b>\n\n<b>Name:</b> ${user.name}\n<b>Email:</b> ${user.email}\n<b>Picture:</b> ${imageLink}`;
+    //       await sendTelegramMessage(message);
+    //     }
+    //   }
+    // }),
+  },
+  rateLimit: {
+    enabled: true,
+    window: 10,
+    max: 100,
+    storage: "database",
+    modelName: "rateLimit",
   },
   plugins: [
     admin({
@@ -81,4 +114,11 @@ export const auth = betterAuth({
     oneTap(),
     nextCookies(),
   ],
+  advanced: {
+    ipAddress: {
+      ipAddressHeaders: ["x-client-ip", "x-forwarded-for"],
+      disableIpTracking: false,
+    },
+    cookiePrefix: "AMS_AUTH",
+  },
 });
