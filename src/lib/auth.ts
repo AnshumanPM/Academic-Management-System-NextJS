@@ -116,7 +116,7 @@ export const auth = betterAuth({
   ],
   advanced: {
     ipAddress: {
-      ipAddressHeaders: ["x-client-ip", "x-forwarded-for"],
+      ipAddressHeaders: ["cf-connecting-ip", "x-real-ip", "x-forwarded-for"],
       disableIpTracking: false,
     },
     cookiePrefix: "AMS_AUTH",

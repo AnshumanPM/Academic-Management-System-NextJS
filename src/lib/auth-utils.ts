@@ -4,6 +4,9 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
+import { db } from "@/db/drizzle";
+import { user } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 const signInSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -144,11 +147,34 @@ export const updateUserProfile = async (data: {
   try {
     const validatedData = updateProfileSchema.parse(data);
 
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return {
+        success: false,
+        message: "Unauthorized: No valid session found",
+      };
+    }
+
     const updateData: { name: string; username?: string } = {
       name: validatedData.name,
     };
 
     if (validatedData.username && validatedData.username.trim() !== "") {
+      const newUsername = validatedData.username.trim().toLowerCase();
+
+      const existingUser = await db
+        .select({ id: user.id, username: user.username })
+        .from(user)
+        .where(eq(user.username, newUsername))
+        .limit(1);
+
+      if (existingUser.length > 0 && existingUser[0].id !== session.user.id) {
+        return {
+          success: false,
+          message: "Username is already taken. Please choose a different username.",
+        };
+      }
+
       updateData.username = validatedData.username;
     }
 
