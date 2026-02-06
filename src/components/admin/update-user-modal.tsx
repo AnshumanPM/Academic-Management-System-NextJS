@@ -45,13 +45,13 @@ type User = {
   name: string;
   email: string;
   emailVerified: boolean;
-  image: string | null;
-  createdAt: string;
-  updatedAt: string;
-  role: string;
-  banned: boolean;
-  banReason: string | null;
-  banExpires: string | null;
+  image?: string | null;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  role?: string;
+  banned?: boolean | null;
+  banReason?: string | null;
+  banExpires?: string | Date | null;
   username?: string | null;
   displayUsername?: string | null;
 };
@@ -70,17 +70,20 @@ export function UpdateUserModal({
   onUpdateSuccess,
 }: UpdateUserModalProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [isBanned, setIsBanned] = useState(user.banned);
+  const [isBanned, setIsBanned] = useState(user.banned || false);
 
   const form = useForm<UpdateUserFormValues>({
     resolver: zodResolver(updateUserFormSchema),
     defaultValues: {
       name: user.name,
       email: user.email,
-      role: user.role as "user" | "admin",
-      banned: user.banned,
+      role: (user.role as "user" | "admin") || "user",
+      banned: user.banned || false,
       banReason: user.banReason || "",
-      banExpires: user.banExpires || "",
+      banExpires:
+        typeof user.banExpires === "object" && user.banExpires instanceof Date
+          ? user.banExpires.toISOString().slice(0, 16)
+          : user.banExpires || "",
       username: user.username || "",
     },
   });
