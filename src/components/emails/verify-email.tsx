@@ -3,8 +3,9 @@ import {
   Button,
   Container,
   Head,
-  Hr,
+  Heading,
   Html,
+  Link,
   Section,
   Tailwind,
   Text,
@@ -23,44 +24,70 @@ const VerifyEmail = (props: VerifyEmailProps) => {
         <Head />
         <Body className="bg-gray-100 py-[40px] font-sans">
           <Container className="mx-auto max-w-[600px] rounded-[8px] bg-white p-[32px]">
-            <Section>
-              <Text className="mt-0 mb-[16px] text-[24px] font-bold text-gray-900">
-                Verify your email address
+            <Section className="mb-[32px] text-center">
+              <Heading className="m-0 mb-[8px] text-[28px] font-bold text-gray-900">
+                Verify Your Email Address
+              </Heading>
+              <Text className="m-0 text-[16px] text-gray-600">
+                Complete your registration to get started
               </Text>
+            </Section>
 
-              <Text className="mt-0 mb-[24px] text-[16px] leading-[24px] text-gray-700">
-                Thanks {username} for signing up! To complete your registration
-                and secure your account, please verify your email address by
-                clicking the button below.
+            <Section className="mb-[24px]">
+              <Text className="m-0 mb-[16px] text-[16px] leading-[24px] text-gray-700">
+                Hello, {username}
               </Text>
+              <Text className="m-0 mb-[24px] text-[16px] leading-[24px] text-gray-700">
+                Thanks for signing up! To complete your registration and secure
+                your account, please verify your email address by clicking the
+                button below.
+              </Text>
+            </Section>
 
-              <Section className="mb-[32px] text-center">
-                <Button
-                  className="box-border rounded-[6px] bg-blue-600 px-[32px] py-[12px] text-[16px] font-medium text-white no-underline"
-                  href={verifyUrl}
-                >
-                  Verify Email Address
-                </Button>
-              </Section>
+            <Section className="mb-[32px] text-center">
+              <Button
+                className="box-border inline-block rounded-[6px] bg-gray-800 px-[32px] py-[12px] text-[16px] font-medium text-white no-underline"
+                href={verifyUrl}
+              >
+                Verify Email Address
+              </Button>
+            </Section>
 
-              <Text className="mt-0 mb-[24px] text-[14px] leading-[20px] text-gray-600">
-                If the button doesn&apos;t work, you can copy and paste this
-                link into your browser:
-                <br />
+            <Section className="mb-[24px]">
+              <Text className="m-0 mb-[8px] text-[14px] leading-[20px] text-gray-600">
+                If the button doesn&apos;t work, copy and paste this link into
+                your browser:
+              </Text>
+              <Link
+                className="text-[14px] break-all text-gray-700"
+                href={verifyUrl}
+              >
                 {verifyUrl}
+              </Link>
+            </Section>
+
+            <Section className="mb-[24px] rounded-[8px] bg-gray-50 p-[20px]">
+              <Text className="m-0 mb-[8px] text-[14px] leading-[20px] font-semibold text-gray-700">
+                Important Information:
               </Text>
-
-              <Text className="mt-0 mb-[32px] text-[14px] leading-[20px] text-gray-600">
-                This verification link will expire in 24 hours. If you
-                didn&apos;t create an account, you can safely ignore this email.
+              <Text className="m-0 mb-[8px] text-[14px] leading-[20px] text-gray-600">
+                • This verification link will expire in 24 hours
               </Text>
+              <Text className="m-0 text-[14px] leading-[20px] text-gray-600">
+                • If you didn&apos;t create an account, you can safely ignore
+                this email
+              </Text>
+            </Section>
 
-              <Hr className="my-[24px] border-gray-200" />
-
-              <Text className="m-0 text-[12px] leading-[16px] text-gray-500">
-                Best regards,
-                <br />
-                Anshuman
+            <Section className="mb-[24px]">
+              <Text className="m-0 text-[14px] leading-[20px] text-gray-600">
+                Need help? Contact our support team at{" "}
+                <Link
+                  className="text-gray-700"
+                  href="mailto:admin@anshumanpm.in"
+                >
+                  admin@anshumanpm.in
+                </Link>
               </Text>
             </Section>
           </Container>
