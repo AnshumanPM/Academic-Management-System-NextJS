@@ -1,33 +1,33 @@
 // lib/nav-config.ts
 export const adminNavConfig = [
-  {
-    title: "Dashboard",
-    url: "/dashboard/admin",
-    icon: "SquareTerminal",
-    isActive: true,
-    items: [
-      { title: "Overview", url: "/dashboard/admin" },
-      { title: "Analytics", url: "/dashboard/admin/analytics" },
-    ],
-  },
+  // {
+  //   title: "Dashboard",
+  //   url: "/dashboard/admin",
+  //   icon: "SquareTerminal",
+  //   isActive: true,
+  //   items: [
+  //     { title: "Overview", url: "/dashboard/admin" },
+  //     { title: "Analytics", url: "/dashboard/admin/analytics" },
+  //   ],
+  // },
   {
     title: "Users",
-    url: "/dashboard/admin/users",
+    url: "/dashboard/admin/list-users",
     icon: "Users",
-    items: [
-      { title: "All Users", url: "/dashboard/admin/users" },
-      { title: "Roles", url: "/dashboard/admin/users/roles" },
-    ],
+    // items: [
+    //   { title: "All Users", url: "/dashboard/admin/users" },
+    //   { title: "Roles", url: "/dashboard/admin/users/roles" },
+    // ],
   },
-  {
-    title: "Settings",
-    url: "/dashboard/admin/settings",
-    icon: "Settings2",
-    items: [
-      { title: "General", url: "/dashboard/admin/settings/general" },
-      { title: "Billing", url: "/dashboard/admin/settings/billing" },
-    ],
-  },
+  // {
+  //   title: "Settings",
+  //   url: "/dashboard/admin/settings",
+  //   icon: "Settings2",
+  //   items: [
+  //     { title: "General", url: "/dashboard/admin/settings/general" },
+  //     { title: "Billing", url: "/dashboard/admin/settings/billing" },
+  //   ],
+  // },
 ];
 
 export const studentNavConfig = [

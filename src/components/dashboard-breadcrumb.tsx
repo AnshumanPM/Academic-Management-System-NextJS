@@ -18,7 +18,7 @@ type NavItem = {
   url: string;
   icon: string;
   isActive?: boolean;
-  items: {
+  items?: {
     title: string;
     url: string;
   }[];
@@ -34,21 +34,20 @@ export function DashboardBreadcrumb({ navItems }: Props) {
   let parent: NavItem | null = null;
   let child: { title: string; url: string } | null = null;
 
-  // Find matching nav item
   for (const item of navItems) {
-    // Parent match
     if (item.url === pathname) {
       parent = item;
       break;
     }
 
-    // Child match
-    const found = item.items.find((sub) => sub.url === pathname);
+    if (item.items) {
+      const found = item.items.find((sub) => sub.url === pathname);
 
-    if (found) {
-      parent = item;
-      child = found;
-      break;
+      if (found) {
+        parent = item;
+        child = found;
+        break;
+      }
     }
   }
 

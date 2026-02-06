@@ -171,7 +171,8 @@ export const updateUserProfile = async (data: {
       if (existingUser.length > 0 && existingUser[0].id !== session.user.id) {
         return {
           success: false,
-          message: "Username is already taken. Please choose a different username.",
+          message:
+            "Username is already taken. Please choose a different username.",
         };
       }
 
@@ -200,6 +201,171 @@ export const updateUserProfile = async (data: {
     return {
       success: false,
       message: e.message || "An unknown error occurred.",
+    };
+  }
+};
+
+const updateUserSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name must be less than 100 characters")
+    .optional(),
+  email: z.string().email("Invalid email address").optional(),
+  role: z.enum(["user", "admin"]).optional(),
+  banned: z.boolean().optional(),
+  banReason: z.string().optional().nullable(),
+  banExpires: z.string().optional().nullable(),
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(30, "Username must be less than 30 characters")
+    .regex(
+      /^[a-zA-Z0-9_-]+$/,
+      "Username can only contain letters, numbers, underscores, and hyphens",
+    )
+    .optional()
+    .nullable(),
+});
+
+export const listUsers = async () => {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+
+    if (!session) {
+      return {
+        success: false,
+        message: "Unauthorized: No valid session found",
+        users: [],
+      };
+    }
+
+    if (session.user.role !== "admin") {
+      return {
+        success: false,
+        message: "Forbidden: Admin access required",
+        users: [],
+      };
+    }
+
+    const { users } = await auth.api.listUsers({
+      query: {},
+      headers: await headers(),
+    });
+
+    return {
+      success: true,
+      message: "Users fetched successfully",
+      users,
+    };
+  } catch (error) {
+    const e = error as Error;
+    return {
+      success: false,
+      message: e.message || "An unknown error occurred",
+      users: [],
+    };
+  }
+};
+
+export const adminUpdateUser = async (data: {
+  userId: string;
+  name?: string;
+  email?: string;
+  role?: "user" | "admin";
+  banned?: boolean;
+  banReason?: string | null;
+  banExpires?: string | null;
+  username?: string | null;
+}) => {
+  try {
+    const validatedData = updateUserSchema.parse(data);
+
+    const session = await auth.api.getSession({ headers: await headers() });
+
+    if (!session) {
+      return {
+        success: false,
+        message: "Unauthorized: No valid session found",
+      };
+    }
+
+    if (session.user.role !== "admin") {
+      return {
+        success: false,
+        message: "Forbidden: Admin access required",
+      };
+    }
+
+    const updateData: Record<string, unknown> = {};
+
+    if (validatedData.name !== undefined) {
+      updateData.name = validatedData.name;
+    }
+    if (validatedData.email !== undefined) {
+      updateData.email = validatedData.email;
+    }
+    if (validatedData.role !== undefined) {
+      updateData.role = validatedData.role;
+    }
+    if (validatedData.banned !== undefined) {
+      updateData.banned = validatedData.banned;
+    }
+    if (validatedData.banReason !== undefined) {
+      updateData.banReason = validatedData.banReason;
+    }
+    if (validatedData.banExpires !== undefined) {
+      updateData.banExpires = validatedData.banExpires;
+    }
+    if (validatedData.username !== undefined) {
+      if (validatedData.username && validatedData.username.trim() !== "") {
+        const newUsername = validatedData.username.trim().toLowerCase();
+
+        const existingUser = await db
+          .select({ id: user.id, username: user.username })
+          .from(user)
+          .where(eq(user.username, newUsername))
+          .limit(1);
+
+        if (
+          existingUser.length > 0 &&
+          existingUser[0].id !== validatedData.userId
+        ) {
+          return {
+            success: false,
+            message:
+              "Username is already taken. Please choose a different username.",
+          };
+        }
+
+        updateData.username = validatedData.username;
+      } else {
+        updateData.username = null;
+      }
+    }
+
+    await db
+      .update(user)
+      .set(updateData)
+      .where(eq(user.id, validatedData.userId));
+
+    return {
+      success: true,
+      message: "User updated successfully",
+    };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        message: error.issues[0]?.message || "Validation error",
+      };
+    }
+
+    const e = error as Error;
+    return {
+      success: false,
+      message: e.message || "An unknown error occurred",
     };
   }
 };

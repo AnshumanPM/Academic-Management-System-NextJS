@@ -1,16 +1,23 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { listUsers } from "@/lib/auth-utils";
+import { UsersTable } from "@/components/admin/users-table";
 
-export default async function Profile() {
-  const { users } = await auth.api.listUsers({
-    query: {},
-    headers: await headers(),
-  });
+export default async function ListUsersPage() {
+  const result = await listUsers();
+
+  if (!result.success) {
+    redirect("/dashboard");
+  }
+
   return (
-    <div>
-      <h1>All Users</h1>
-      <pre>{JSON.stringify(users, null, 2)}</pre>
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
+        <p className="text-muted-foreground mt-2">
+          Manage all users in the system
+        </p>
+      </div>
+      <UsersTable initialUsers={result.users} />
     </div>
   );
 }
