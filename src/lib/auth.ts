@@ -69,31 +69,23 @@ export const auth = betterAuth({
         });
       }
     }),
-    // after: createAuthMiddleware(async (ctx) => {
-    //   if (ctx.path.startsWith("/sign-up")) {
-    //     const newSession = ctx.context.newSession;
-    //     if (newSession) {
-    //       const user = newSession.user;
-    //       const imageLink = user.image
-    //         ? `<a href="${user.image}">Here</a>`
-    //         : "No image";
-    //       const message = `<b>New Signup</b>\n\n<b>Name:</b> ${user.name}\n<b>Email:</b> ${user.email}\n<b>Picture:</b> ${imageLink}`;
-    //       await sendTelegramMessage(message);
-    //     }
-    //   }
-
-    //   if (ctx.path.startsWith("/sign-in")) {
-    //     const newSession = ctx.context.newSession;
-    //     if (newSession) {
-    //       const user = newSession.user;
-    //       const imageLink = user.image
-    //         ? `<a href="${user.image}">Here</a>`
-    //         : "No image";
-    //       const message = `<b>New Sign In</b>\n\n<b>Name:</b> ${user.name}\n<b>Email:</b> ${user.email}\n<b>Picture:</b> ${imageLink}`;
-    //       await sendTelegramMessage(message);
-    //     }
-    //   }
-    // }),
+    after: createAuthMiddleware(async (ctx) => {
+      if (
+        ctx.path.startsWith("/sign-up") ||
+        ctx.path.startsWith("/sign-in") ||
+        ctx.path.startsWith("/callback")
+      ) {
+        const newSession = ctx.context.newSession;
+        if (newSession) {
+          const user = newSession.user;
+          const imageLink = user.image
+            ? `<a href="${user.image}">Here</a>`
+            : "No image";
+          const message = `<b>New ${ctx.path.startsWith("/sign-up") ? "Sign Up" : "Sign In"}</b>\n\n<b>Name:</b> ${user.name}\n<b>Email:</b> ${user.email}\n<b>Picture:</b> ${imageLink}`;
+          await sendTelegramMessage(message);
+        }
+      }
+    }),
   },
   rateLimit: {
     enabled: true,

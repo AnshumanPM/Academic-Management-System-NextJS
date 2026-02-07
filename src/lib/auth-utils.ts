@@ -9,12 +9,12 @@ import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 const signInSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 const signUpSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.email("Invalid email address"),
   name: z
     .string()
     .min(2, "Name must be at least 2 characters")
@@ -212,7 +212,7 @@ const updateUserSchema = z.object({
     .min(2, "Name must be at least 2 characters")
     .max(100, "Name must be less than 100 characters")
     .optional(),
-  email: z.string().email("Invalid email address").optional(),
+  email: z.email("Invalid email address").optional(),
   role: z.enum(["user", "admin"]).optional(),
   banned: z.boolean().optional(),
   banReason: z.string().optional().nullable(),
@@ -238,6 +238,7 @@ export const listUsers = async () => {
         success: false,
         message: "Unauthorized: No valid session found",
         users: [],
+        total: 0,
       };
     }
 
@@ -246,18 +247,47 @@ export const listUsers = async () => {
         success: false,
         message: "Forbidden: Admin access required",
         users: [],
+        total: 0,
       };
     }
 
-    const { users } = await auth.api.listUsers({
+    const result = await auth.api.listUsers({
       query: {},
       headers: await headers(),
     });
 
+    const usersWithLastLogin = await Promise.all(
+      result.users.map(async (u) => {
+        try {
+          const sessionData = await auth.api.listUserSessions({
+            body: { userId: u.id },
+            headers: await headers(),
+          });
+
+          const sessions = sessionData.sessions || [];
+          const sortedSessions = [...sessions].sort(
+            (a: any, b: any) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          );
+
+          return {
+            ...u,
+            lastLogin: sortedSessions[0]?.createdAt || null,
+          };
+        } catch {
+          return {
+            ...u,
+            lastLogin: null,
+          };
+        }
+      }),
+    );
+
     return {
       success: true,
       message: "Users fetched successfully",
-      users,
+      users: usersWithLastLogin,
+      total: result.total,
     };
   } catch (error) {
     const e = error as Error;
@@ -265,6 +295,7 @@ export const listUsers = async () => {
       success: false,
       message: e.message || "An unknown error occurred",
       users: [],
+      total: 0,
     };
   }
 };
@@ -316,7 +347,9 @@ export const adminUpdateUser = async (data: {
       updateData.banReason = validatedData.banReason;
     }
     if (validatedData.banExpires !== undefined) {
-      updateData.banExpires = validatedData.banExpires;
+      updateData.banExpires = validatedData.banExpires
+        ? new Date(validatedData.banExpires)
+        : null;
     }
     if (validatedData.username !== undefined) {
       if (validatedData.username && validatedData.username.trim() !== "") {
