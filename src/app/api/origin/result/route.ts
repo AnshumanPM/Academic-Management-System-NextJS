@@ -51,14 +51,14 @@ async function getOriginResData(
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await authSession();
+    // const session = await authSession();
 
-    if (!session) {
-      return NextResponse.json(
-        { status: 401, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
+    // if (!session) {
+    //   return NextResponse.json(
+    //     { status: 401, message: "Unauthorized" },
+    //     { status: 401 },
+    //   );
+    // }
 
     const body = await request.json();
 
