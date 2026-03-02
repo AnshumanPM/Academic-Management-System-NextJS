@@ -174,7 +174,7 @@ export default function Results() {
           </Select>
         </div>
 
-        {/* <div className="w-full md:max-w-xs">
+        <div className="w-full md:max-w-xs">
           <Select value={examCode} onValueChange={setExamCode}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Exam Code" />
@@ -189,7 +189,7 @@ export default function Results() {
                 ))}
             </SelectContent>
           </Select>
-        </div> */}
+        </div>
 
         <div className="w-full md:max-w-xs">
           <Button
