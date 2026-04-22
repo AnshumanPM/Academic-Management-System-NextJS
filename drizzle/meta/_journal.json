@@ -5,8 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1770302217984,
-      "tag": "0000_chubby_franklin_richards",
+      "when": 1776841062438,
+      "tag": "0000_complex_maginty",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776841096334,
+      "tag": "0001_simple_scorpion",
       "breakpoints": true
     }
   ]

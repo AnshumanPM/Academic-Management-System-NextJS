@@ -7,7 +7,7 @@ import { Resend } from "resend";
 import ForgotPasswordEmail from "@/components/emails/reset-password";
 import VerifyEmail from "@/components/emails/verify-email";
 import { db } from "@/db/drizzle";
-import { schema } from "@/db/schema";
+import * as schema from "@/db/auth-schema";
 import { ac, roleObjects, ROLES } from "@/lib/permissions";
 import { sendTelegramMessage } from "@/lib/helper";
 
@@ -56,8 +56,15 @@ export const auth = betterAuth({
   },
   database: drizzleAdapter(db, {
     provider: "pg",
-    schema: { ...schema },
+    schema,
   }),
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 5,
+      strategy: "jwt",
+    },
+  },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       if (ctx.path !== "/sign-up/email") {
@@ -87,13 +94,6 @@ export const auth = betterAuth({
       }
     }),
   },
-  // rateLimit: {
-  //   enabled: true,
-  //   window: 10,
-  //   max: 100,
-  //   storage: "database",
-  //   modelName: "rateLimit",
-  // },
   plugins: [
     admin({
       ac,

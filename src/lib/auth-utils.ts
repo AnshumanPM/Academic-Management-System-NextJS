@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
 import { db } from "@/db/drizzle";
-import { user } from "@/db/schema";
+import { user } from "@/db/auth-schema";
 import { eq } from "drizzle-orm";
 
 const signInSchema = z.object({
