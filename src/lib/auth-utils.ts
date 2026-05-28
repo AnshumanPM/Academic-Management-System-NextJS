@@ -5,8 +5,17 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
 import { db } from "@/db/drizzle";
-import { user } from "@/db/auth-schema";
-import { eq } from "drizzle-orm";
+import { user, session as sessionTable } from "@/db/auth-schema";
+import {
+  eq,
+  ilike,
+  or,
+  asc,
+  desc,
+  count,
+  max,
+  getTableColumns,
+} from "drizzle-orm";
 
 const signInSchema = z.object({
   email: z.email("Invalid email address"),
@@ -229,7 +238,31 @@ const updateUserSchema = z.object({
     .nullable(),
 });
 
-export const listUsers = async () => {
+export type ListUsersParams = {
+  page?: number;
+  limit?: number;
+  searchValue?: string;
+  sortBy?:
+    | "name"
+    | "email"
+    | "username"
+    | "role"
+    | "createdAt"
+    | "banned"
+    | "lastLogin";
+  sortDirection?: "asc" | "desc";
+};
+
+const sortColumnMap = {
+  name: user.name,
+  email: user.email,
+  username: user.username,
+  role: user.role,
+  createdAt: user.createdAt,
+  banned: user.banned,
+} as const;
+
+export const listUsers = async (params: ListUsersParams = {}) => {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
 
@@ -251,43 +284,64 @@ export const listUsers = async () => {
       };
     }
 
-    const result = await auth.api.listUsers({
-      query: {},
-      headers: await headers(),
-    });
+    const {
+      page = 1,
+      limit = 10,
+      searchValue,
+      sortBy = "createdAt",
+      sortDirection = "desc",
+    } = params;
 
-    const usersWithLastLogin = await Promise.all(
-      result.users.map(async (u) => {
-        try {
-          const sessionData = await auth.api.listUserSessions({
-            body: { userId: u.id },
-            headers: await headers(),
-          });
+    const offset = (page - 1) * limit;
+    const term = searchValue?.trim();
 
-          const sessions = sessionData.sessions || [];
-          const sortedSessions = [...sessions].sort(
-            (a: any, b: any) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          );
+    const whereClause = term
+      ? or(
+          ilike(user.name, `%${term}%`),
+          ilike(user.email, `%${term}%`),
+          ilike(user.username, `%${term}%`),
+          ilike(user.displayUsername, `%${term}%`),
+        )
+      : undefined;
 
-          return {
-            ...u,
-            lastLogin: sortedSessions[0]?.createdAt || null,
-          };
-        } catch {
-          return {
-            ...u,
-            lastLogin: null,
-          };
-        }
-      }),
-    );
+    const lastLoginSubq = db
+      .select({
+        userId: sessionTable.userId,
+        lastLogin: max(sessionTable.createdAt).as("last_login"),
+      })
+      .from(sessionTable)
+      .groupBy(sessionTable.userId)
+      .as("last_login_subq");
+
+    const orderExpr =
+      sortBy === "lastLogin"
+        ? sortDirection === "asc"
+          ? asc(lastLoginSubq.lastLogin)
+          : desc(lastLoginSubq.lastLogin)
+        : sortDirection === "asc"
+          ? asc(sortColumnMap[sortBy])
+          : desc(sortColumnMap[sortBy]);
+
+    const [rows, [{ value: totalCount }]] = await Promise.all([
+      db
+        .select({
+          ...getTableColumns(user),
+          lastLogin: lastLoginSubq.lastLogin,
+        })
+        .from(user)
+        .leftJoin(lastLoginSubq, eq(user.id, lastLoginSubq.userId))
+        .where(whereClause)
+        .orderBy(orderExpr)
+        .limit(limit)
+        .offset(offset),
+      db.select({ value: count() }).from(user).where(whereClause),
+    ]);
 
     return {
       success: true,
       message: "Users fetched successfully",
-      users: usersWithLastLogin,
-      total: result.total,
+      users: rows,
+      total: Number(totalCount),
     };
   } catch (error) {
     const e = error as Error;

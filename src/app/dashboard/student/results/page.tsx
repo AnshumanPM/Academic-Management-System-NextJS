@@ -50,16 +50,17 @@ interface ResultData {
 }
 
 export default function Results() {
+  const currentYear = new Date().getFullYear();
   const [regd, setRegd] = useState("");
   const [sem, setSem] = useState("");
-  const [examCode, setExamCode] = useState("202505");
+  const [examCode, setExamCode] = useState(`${currentYear}05`);
   const [resultData, setResultData] = useState<ResultData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const generateExamOptions = () => {
     const options: Record<string, string> = {};
-    for (let year = 2025; year >= 2020; year--) {
+    for (let year = currentYear; year >= 2020; year--) {
       options[`${year}05`] = `${year} Summer`;
       options[`${year}12`] = `${year} Winter`;
     }

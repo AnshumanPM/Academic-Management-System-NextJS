@@ -1,10 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Turnstile } from "@marsidev/react-turnstile";
+import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -28,7 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
-import { signIn } from "@/lib/auth-utils";
+import { signInClient } from "@/lib/auth-client-utils";
 
 const formSchema = z.object({
   email: z
@@ -53,7 +55,9 @@ export function LoginForm({
   const [isGithubLoading, setIsGithubLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const turnstileRef = useRef<TurnstileInstance | null>(null);
   const router = useRouter();
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -63,26 +67,26 @@ export function LoginForm({
     mode: "onBlur",
   });
 
-  // useEffect(() => {
-  //   const initOneTap = async () => {
-  //     try {
-  //       await authClient.oneTap({
-  //         fetchOptions: {
-  //           headers: {
-  //             "Referrer-Policy": "no-referrer-when-downgrade",
-  //           },
-  //           onSuccess: () => {
-  //             router.push("/dashboard");
-  //           },
-  //         },
-  //       });
-  //     } catch (error) {
-  //       console.error("Google One Tap initialization failed:", error);
-  //     }
-  //   };
+  useEffect(() => {
+    const initOneTap = async () => {
+      try {
+        await authClient.oneTap({
+          fetchOptions: {
+            headers: {
+              "Referrer-Policy": "no-referrer-when-downgrade",
+            },
+            onSuccess: () => {
+              router.push("/dashboard");
+            },
+          },
+        });
+      } catch (error) {
+        console.error("Google One Tap initialization failed:", error);
+      }
+    };
 
-  //   initOneTap();
-  // }, []);
+    initOneTap();
+  }, []);
 
   const handleSocialSignIn = async (
     provider: "google" | "github",
@@ -101,10 +105,21 @@ export function LoginForm({
   };
 
   async function onSubmit(values: FormValues) {
+    const turnstileToken = turnstileRef.current?.getResponse();
+
+    if (!turnstileToken) {
+      toast.error("Please complete the security verification.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const { success, message } = await signIn(values.email, values.password);
+      const { success, message } = await signInClient(
+        values.email,
+        values.password,
+        turnstileToken,
+      );
 
       if (success) {
         toast.success(message as string);
@@ -112,9 +127,11 @@ export function LoginForm({
         router.push("/dashboard");
       } else {
         toast.error(message as string);
+        turnstileRef.current?.reset();
       }
     } catch (error) {
       toast.error("An unexpected error occurred. Please try again.");
+      turnstileRef.current?.reset();
     } finally {
       setIsLoading(false);
     }
@@ -129,7 +146,6 @@ export function LoginForm({
         </CardHeader>
         <CardContent>
           <div className="grid gap-6">
-            {/* Social Sign-in Buttons */}
             <div className="flex flex-col gap-3">
               <Button
                 className="relative w-full"
@@ -192,14 +208,12 @@ export function LoginForm({
               </Button>
             </div>
 
-            {/* Divider */}
             <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
               <span className="bg-card text-muted-foreground relative z-10 px-2">
                 Or continue with email
               </span>
             </div>
 
-            {/* Email/Password Form */}
             <Form {...form}>
               <form
                 className="grid gap-4"
@@ -275,6 +289,13 @@ export function LoginForm({
                   )}
                 />
 
+                <div className="flex justify-center">
+                  <Turnstile
+                    ref={turnstileRef}
+                    siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+                  />
+                </div>
+
                 <Button
                   className="w-full"
                   disabled={isLoading || isGoogleLoading || isGithubLoading}
@@ -292,7 +313,6 @@ export function LoginForm({
               </form>
             </Form>
 
-            {/* Sign Up Link */}
             <div className="text-center text-sm">
               Don&apos;t have an account?{" "}
               <Link
@@ -306,7 +326,6 @@ export function LoginForm({
         </CardContent>
       </Card>
 
-      {/* Terms and Privacy */}
       <div className="text-muted-foreground text-center text-xs text-balance">
         By clicking continue, you agree to our{" "}
         <Link

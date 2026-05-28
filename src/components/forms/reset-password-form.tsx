@@ -1,10 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Turnstile } from "@marsidev/react-turnstile";
+import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import { CheckCircle2, Loader2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -26,8 +28,8 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { resetPasswordClient } from "@/lib/auth-client-utils";
 
 const formSchema = z
   .object({
@@ -63,6 +65,8 @@ export function ResetPasswordForm({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const turnstileRef = useRef<TurnstileInstance | null>(null);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -72,7 +76,6 @@ export function ResetPasswordForm({
     mode: "onBlur",
   });
 
-  // Validate token on mount
   useEffect(() => {
     if (!token) {
       setTokenError(true);
@@ -86,34 +89,42 @@ export function ResetPasswordForm({
       return;
     }
 
+    const turnstileToken = turnstileRef.current?.getResponse();
+
+    if (!turnstileToken) {
+      toast.error("Please complete the security verification.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const { error } = await authClient.resetPassword({
-        newPassword: values.password,
+      const { success, message } = await resetPasswordClient(
+        values.password,
         token,
-      });
+        turnstileToken,
+      );
 
-      if (error) {
-        toast.error(error.message || "Failed to reset password");
-      } else {
-        toast.success("Password reset successfully!");
+      if (success) {
+        toast.success(message as string);
         setResetSuccess(true);
         form.reset();
 
-        // Redirect after 2 seconds
         setTimeout(() => {
           router.push("/auth/login");
         }, 2000);
+      } else {
+        toast.error(message as string);
+        turnstileRef.current?.reset();
       }
     } catch (error) {
       toast.error("An unexpected error occurred. Please try again.");
+      turnstileRef.current?.reset();
     } finally {
       setIsLoading(false);
     }
   }
 
-  // Show error state for invalid/missing token
   if (tokenError) {
     return (
       <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -277,6 +288,13 @@ export function ResetPasswordForm({
                     </FormItem>
                   )}
                 />
+
+                <div className="flex justify-center">
+                  <Turnstile
+                    ref={turnstileRef}
+                    siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+                  />
+                </div>
 
                 <Button className="w-full" disabled={isLoading} type="submit">
                   {isLoading ? (

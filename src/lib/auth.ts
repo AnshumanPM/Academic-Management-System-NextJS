@@ -1,6 +1,12 @@
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
-import { lastLoginMethod, admin, username, oneTap } from "better-auth/plugins";
+import {
+  lastLoginMethod,
+  admin,
+  username,
+  oneTap,
+  captcha,
+} from "better-auth/plugins";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { createAuthMiddleware, APIError } from "better-auth/api";
 import { Resend } from "resend";
@@ -105,6 +111,10 @@ export const auth = betterAuth({
     lastLoginMethod(),
     oneTap(),
     nextCookies(),
+    captcha({
+      provider: "cloudflare-turnstile",
+      secretKey: process.env.TURNSTILE_SECRET_KEY!,
+    }),
   ],
   advanced: {
     ipAddress: {

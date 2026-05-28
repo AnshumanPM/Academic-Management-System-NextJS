@@ -1,10 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Turnstile } from "@marsidev/react-turnstile";
+import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -27,7 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
-import { signUp } from "@/lib/auth-utils";
+import { signUpClient } from "@/lib/auth-client-utils";
 
 const formSchema = z.object({
   username: z
@@ -65,7 +67,9 @@ export function SignupForm({
   const [isGithubLoading, setIsGithubLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const turnstileRef = useRef<TurnstileInstance | null>(null);
   const router = useRouter();
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -74,8 +78,29 @@ export function SignupForm({
       email: "",
       password: "",
     },
-    mode: "onBlur", // Validate on blur for better UX
+    mode: "onBlur",
   });
+
+  useEffect(() => {
+    const initOneTap = async () => {
+      try {
+        await authClient.oneTap({
+          fetchOptions: {
+            headers: {
+              "Referrer-Policy": "no-referrer-when-downgrade",
+            },
+            onSuccess: () => {
+              router.push("/dashboard");
+            },
+          },
+        });
+      } catch (error) {
+        console.error("Google One Tap initialization failed:", error);
+      }
+    };
+
+    initOneTap();
+  }, []);
 
   const handleSocialSignIn = async (
     provider: "google" | "github",
@@ -94,14 +119,22 @@ export function SignupForm({
   };
 
   async function onSubmit(values: FormValues) {
+    const turnstileToken = turnstileRef.current?.getResponse();
+
+    if (!turnstileToken) {
+      toast.error("Please complete the security verification.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const { success, message } = await signUp(
+      const { success, message } = await signUpClient(
         values.email,
         values.name,
         values.password,
         values.username,
+        turnstileToken,
       );
 
       if (success) {
@@ -112,9 +145,11 @@ export function SignupForm({
         router.push("/dashboard");
       } else {
         toast.error(message as string);
+        turnstileRef.current?.reset();
       }
     } catch (error) {
       toast.error("An unexpected error occurred. Please try again.");
+      turnstileRef.current?.reset();
     } finally {
       setIsLoading(false);
     }
@@ -129,7 +164,6 @@ export function SignupForm({
         </CardHeader>
         <CardContent>
           <div className="grid gap-6">
-            {/* Social Sign-in Buttons */}
             <div className="flex flex-col gap-3">
               <Button
                 className="w-full"
@@ -182,14 +216,12 @@ export function SignupForm({
               </Button>
             </div>
 
-            {/* Divider */}
             <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
               <span className="bg-card text-muted-foreground relative z-10 px-2">
                 Or continue with email
               </span>
             </div>
 
-            {/* Email/Password Form */}
             <Form {...form}>
               <form
                 className="grid gap-4"
@@ -285,6 +317,13 @@ export function SignupForm({
                   )}
                 />
 
+                <div className="flex justify-center">
+                  <Turnstile
+                    ref={turnstileRef}
+                    siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+                  />
+                </div>
+
                 <Button
                   className="w-full"
                   disabled={isLoading || isGoogleLoading || isGithubLoading}
@@ -302,7 +341,6 @@ export function SignupForm({
               </form>
             </Form>
 
-            {/* Login Link */}
             <div className="text-center text-sm">
               Already have an account?{" "}
               <Link
@@ -316,7 +354,6 @@ export function SignupForm({
         </CardContent>
       </Card>
 
-      {/* Terms and Privacy */}
       <div className="text-muted-foreground text-center text-xs text-balance">
         By clicking continue, you agree to our{" "}
         <Link

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -15,7 +15,16 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UpdateUserModal } from "@/components/admin/update-user-modal";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
   Search,
   Edit,
   ChevronLeft,
@@ -28,7 +37,7 @@ import {
   PaginationItem,
 } from "@/components/ui/pagination";
 import { toast } from "sonner";
-import { listUsers } from "@/lib/auth-utils";
+import { listUsers, type ListUsersParams } from "@/lib/auth-utils";
 
 type User = {
   id: string;
@@ -47,131 +56,100 @@ type User = {
   lastLogin?: string | Date | null;
 };
 
-type SortField =
-  | "name"
-  | "email"
-  | "username"
-  | "role"
-  | "createdAt"
-  | "banned"
-  | "lastLogin";
+type SortField = NonNullable<ListUsersParams["sortBy"]>;
 type SortDirection = "asc" | "desc";
 
-const ITEMS_PER_PAGE = 10;
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
+const SEARCH_DEBOUNCE_MS = 400;
+
+const formatDate = (value: string | Date) => {
+  const d = new Date(value);
+  return {
+    date: d.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }),
+    time: d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+  };
+};
 
 export function UsersTable() {
-  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [total, setTotal] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] =
+    useState<(typeof PAGE_SIZE_OPTIONS)[number]>(10);
   const [isLoading, setIsLoading] = useState(true);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Debounce search input
   useEffect(() => {
-    const fetchUsers = async () => {
-      setIsLoading(true);
-
-      try {
-        const result = await listUsers();
-
-        if (!result.success) {
-          throw new Error(result.message);
-        }
-
-        setAllUsers(result.users);
-      } catch (error) {
-        toast.error("Failed to fetch users");
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1); // reset to page 1 on new search
+    }, SEARCH_DEBOUNCE_MS);
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
+  }, [searchQuery]);
 
-    fetchUsers();
-  }, []);
+  const fetchUsers = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const params: ListUsersParams = {
+        page: currentPage,
+        limit: pageSize,
+        sortBy: sortField,
+        sortDirection,
+      };
 
-  const filteredUsers = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return allUsers;
+      if (debouncedSearch.trim()) {
+        params.searchValue = debouncedSearch.trim();
+      }
+
+      const result = await listUsers(params);
+
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+
+      setUsers(result.users as User[]);
+      setTotal(result.total ?? 0);
+    } catch (error) {
+      toast.error("Failed to fetch users");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
-
-    const query = searchQuery.toLowerCase();
-    return allUsers.filter((user) => {
-      const name = user.name?.toLowerCase() || "";
-      const email = user.email?.toLowerCase() || "";
-      const username = user.username?.toLowerCase() || "";
-      const displayUsername = user.displayUsername?.toLowerCase() || "";
-
-      return (
-        name.includes(query) ||
-        email.includes(query) ||
-        username.includes(query) ||
-        displayUsername.includes(query)
-      );
-    });
-  }, [allUsers, searchQuery]);
-
-  const sortedUsers = useMemo(() => {
-    const sorted = [...filteredUsers];
-
-    sorted.sort((a: User, b: User) => {
-      let aValue: any = a[sortField];
-      let bValue: any = b[sortField];
-
-      if (sortField === "createdAt" || sortField === "lastLogin") {
-        const aTime = aValue ? new Date(aValue).getTime() : 0;
-        const bTime = bValue ? new Date(bValue).getTime() : 0;
-        return sortDirection === "asc" ? aTime - bTime : bTime - aTime;
-      }
-
-      if (sortField === "banned") {
-        return sortDirection === "asc"
-          ? Number(aValue || false) - Number(bValue || false)
-          : Number(bValue || false) - Number(aValue || false);
-      }
-
-      if (sortField === "username") {
-        const aUsername = a.displayUsername || a.username || "";
-        const bUsername = b.displayUsername || b.username || "";
-        return sortDirection === "asc"
-          ? aUsername.localeCompare(bUsername)
-          : bUsername.localeCompare(aUsername);
-      }
-
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return sortDirection === "asc"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-
-      return 0;
-    });
-
-    return sorted;
-  }, [filteredUsers, sortField, sortDirection]);
-
-  const paginatedUsers = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return sortedUsers.slice(startIndex, endIndex);
-  }, [sortedUsers, currentPage]);
-
-  const totalPages = Math.ceil(sortedUsers.length / ITEMS_PER_PAGE);
-  const total = sortedUsers.length;
+  }, [currentPage, debouncedSearch, sortField, sortDirection, pageSize]);
 
   useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const handlePageSizeChange = (value: string) => {
+    setPageSize(Number(value) as (typeof PAGE_SIZE_OPTIONS)[number]);
     setCurrentPage(1);
-  }, [searchQuery]);
+  };
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
       setSortField(field);
       setSortDirection("asc");
     }
+    setCurrentPage(1);
   };
 
   const handleEditClick = (user: User) => {
@@ -180,13 +158,14 @@ export function UsersTable() {
   };
 
   const handleUpdateSuccess = (updatedUser: User) => {
-    setAllUsers(
-      allUsers.map((u) => (u.id === updatedUser.id ? updatedUser : u)),
+    setUsers((prev) =>
+      prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)),
     );
     setIsModalOpen(false);
   };
 
   const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
   };
 
@@ -196,34 +175,67 @@ export function UsersTable() {
   }: {
     field: SortField;
     children: React.ReactNode;
-  }) => (
-    <Button
-      variant="ghost"
-      onClick={() => handleSort(field)}
-      className="h-8 px-2 lg:px-3"
-    >
-      {children}
-      <ArrowUpDown className="ml-2 h-4 w-4" />
-    </Button>
-  );
+  }) => {
+    const isActive = sortField === field;
+    const Icon = isActive
+      ? sortDirection === "asc"
+        ? ArrowUp
+        : ArrowDown
+      : ArrowUpDown;
+    return (
+      <Button
+        variant="ghost"
+        onClick={() => handleSort(field)}
+        className={`h-8 px-2 lg:px-3 ${isActive ? "text-foreground font-semibold" : ""}`}
+      >
+        {children}
+        <Icon
+          className={`ml-2 h-4 w-4 ${isActive ? "opacity-100" : "opacity-40"}`}
+        />
+      </Button>
+    );
+  };
+
+  const startItem = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, total);
 
   return (
     <div className="space-y-6">
+      {/* Search bar + count */}
       <div className="flex items-center gap-4">
         <div className="relative flex-1">
           <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
-            placeholder="Search by name or email..."
+            placeholder="Search by name, email or username..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
           />
+          {isLoading && searchQuery && (
+            <Loader2 className="text-muted-foreground absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin" />
+          )}
+        </div>
+        <div className="flex items-center gap-2 whitespace-nowrap">
+          <span className="text-muted-foreground text-sm">Rows</span>
+          <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
+            <SelectTrigger className="w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PAGE_SIZE_OPTIONS.map((n) => (
+                <SelectItem key={n} value={String(n)}>
+                  {n}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="text-muted-foreground text-sm whitespace-nowrap">
           {total} user{total !== 1 ? "s" : ""}
         </div>
       </div>
 
+      {/* Table */}
       <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
@@ -267,14 +279,14 @@ export function UsersTable() {
                   </div>
                 </TableCell>
               </TableRow>
-            ) : paginatedUsers.length === 0 ? (
+            ) : users.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="h-24 text-center">
                   No users found.
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedUsers.map((user) => (
+              users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="border text-center align-top">
                     <Avatar className="h-8 w-8">
@@ -328,20 +340,18 @@ export function UsersTable() {
                   </TableCell>
                   <TableCell className="border text-center align-top">
                     <div className="text-sm">
-                      <div>{new Date(user.createdAt).toLocaleDateString()}</div>
+                      <div>{formatDate(user.createdAt).date}</div>
                       <div className="text-muted-foreground text-xs">
-                        {new Date(user.createdAt).toLocaleTimeString()}
+                        {formatDate(user.createdAt).time}
                       </div>
                     </div>
                   </TableCell>
                   <TableCell className="border text-center align-top">
                     {user.lastLogin ? (
                       <div className="text-sm">
-                        <div>
-                          {new Date(user.lastLogin).toLocaleDateString()}
-                        </div>
+                        <div>{formatDate(user.lastLogin).date}</div>
                         <div className="text-muted-foreground text-xs">
-                          {new Date(user.lastLogin).toLocaleTimeString()}
+                          {formatDate(user.lastLogin).time}
                         </div>
                       </div>
                     ) : (
@@ -366,11 +376,11 @@ export function UsersTable() {
         </Table>
       </div>
 
-      {totalPages > 1 && !isLoading && (
+      {/* Pagination */}
+      {!isLoading && total > pageSize && (
         <div className="flex items-center justify-between px-2">
           <p className="text-muted-foreground text-sm">
-            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{" "}
-            {Math.min(currentPage * ITEMS_PER_PAGE, total)} of {total} results
+            Showing {startItem} to {endItem} of {total} results
           </p>
 
           <Pagination>
