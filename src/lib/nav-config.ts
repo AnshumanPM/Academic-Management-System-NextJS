@@ -38,6 +38,7 @@ export const studentNavConfig = [
     isActive: true,
     items: [
       { title: "Results", url: "/dashboard/student/results" },
+      { title: "Marksheet", url: "/dashboard/student/marksheet" },
       // { title: "Profile", url: "/dashboard/student/profile" },
     ],
   },
