@@ -1,7 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  MoreHorizontal,
+  Printer,
+  RotateCcw,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 import "react-pdf/dist/Page/TextLayer.css";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 
@@ -30,6 +49,8 @@ export function PdfRenderViewer({
   showTextLayer = false,
   showAnnotationLayer = false,
 }: PdfRenderViewerProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
   const [numPages, setNumPages] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(initialScale);
@@ -46,12 +67,12 @@ export function PdfRenderViewer({
       const width = window.innerWidth;
 
       if (width < 640) {
-        setPageWidth(Math.max(280, width - 48));
+        setPageWidth(Math.max(260, width - 24));
         return;
       }
 
       if (width < 1024) {
-        setPageWidth(Math.min(760, width - 80));
+        setPageWidth(Math.min(760, width - 48));
         return;
       }
 
@@ -66,10 +87,47 @@ export function PdfRenderViewer({
     };
   }, []);
 
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      const isDesktop = window.innerWidth >= 1024;
+      const wantsZoom = e.ctrlKey || e.metaKey;
+
+      if (!isDesktop || !wantsZoom) return;
+
+      e.preventDefault();
+
+      setScale((prev) => {
+        const next = e.deltaY < 0 ? prev + 0.1 : prev - 0.1;
+        return Math.min(3, Math.max(0.5, +next.toFixed(1)));
+      });
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+    };
+  }, []);
+
   const safePageNumber = useMemo(() => {
     if (!numPages) return 1;
     return Math.min(Math.max(pageNumber, 1), numPages);
   }, [pageNumber, numPages]);
+
+  const zoomOut = () => {
+    setScale((s) => Math.max(0.5, +(s - 0.1).toFixed(1)));
+  };
+
+  const zoomIn = () => {
+    setScale((s) => Math.min(3, +(s + 0.1).toFixed(1)));
+  };
+
+  const resetZoom = () => {
+    setScale(initialScale);
+  };
 
   const handleDownload = () => {
     const link = document.createElement("a");
@@ -78,103 +136,173 @@ export function PdfRenderViewer({
     link.click();
   };
 
+  const isMobileDevice = () => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 767px)").matches;
+  };
+
   const handlePrint = () => {
+    if (!pdfUrl) return;
+
     const printWindow = window.open(pdfUrl, "_blank");
     if (!printWindow) return;
 
-    printWindow.focus();
+    if (isMobileDevice()) {
+      return;
+    }
 
-    window.setTimeout(() => {
+    let printed = false;
+
+    const printOnce = () => {
+      if (printed) return;
+      printed = true;
+
       try {
+        printWindow.focus();
         printWindow.print();
       } catch {}
-    }, 800);
+    };
+
+    try {
+      printWindow.addEventListener("load", printOnce, { once: true });
+    } catch {}
+
+    window.setTimeout(printOnce, 1200);
   };
 
   return (
-    <div className="bg-background text-foreground flex h-[90vh] flex-col overflow-hidden rounded-lg border">
-      <div className="bg-card border-b">
-        <div className="flex flex-wrap items-center gap-2 px-3 py-3">
-          <button
-            type="button"
-            onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
-            disabled={!numPages || safePageNumber <= 1}
-            className="inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm disabled:opacity-50"
-          >
-            Prev
-          </button>
+    <div className="bg-background text-foreground flex h-[90vh] min-h-0 flex-col overflow-hidden rounded-xl border">
+      <div className="bg-card border-b p-2 sm:p-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+              disabled={!numPages || safePageNumber <= 1}
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
 
-          <div className="min-w-24 text-sm tabular-nums">
-            {numPages ? `${safePageNumber} / ${numPages}` : "0 / 0"}
+            <div className="text-muted-foreground min-w-[72px] text-center text-sm tabular-nums">
+              {numPages ? `${safePageNumber} / ${numPages}` : "0 / 0"}
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
+              disabled={!numPages || safePageNumber >= numPages}
+              aria-label="Next page"
+            >
+              <ChevronRight className="size-4" />
+            </Button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
-            disabled={!numPages || safePageNumber >= numPages}
-            className="inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm disabled:opacity-50"
-          >
-            Next
-          </button>
-
-          <div className="ml-2 flex items-center gap-2">
-            <button
+          <div className="hidden items-center gap-2 md:flex">
+            <Button
               type="button"
-              onClick={() =>
-                setScale((s) => Math.max(0.5, +(s - 0.1).toFixed(1)))
-              }
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border text-sm"
+              variant="outline"
+              size="icon"
+              onClick={zoomOut}
+              aria-label="Zoom out"
             >
-              -
-            </button>
+              <ZoomOut className="size-4" />
+            </Button>
 
-            <div className="w-16 text-center text-sm tabular-nums">
+            <div className="text-muted-foreground w-14 text-center text-sm tabular-nums">
               {Math.round(scale * 100)}%
             </div>
 
-            <button
+            <Button
               type="button"
-              onClick={() =>
-                setScale((s) => Math.min(3, +(s + 0.1).toFixed(1)))
-              }
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border text-sm"
+              variant="outline"
+              size="icon"
+              onClick={zoomIn}
+              aria-label="Zoom in"
             >
-              +
-            </button>
+              <ZoomIn className="size-4" />
+            </Button>
 
-            <button
+            <Button
               type="button"
-              onClick={() => setScale(initialScale)}
-              className="inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm"
+              variant="outline"
+              size="sm"
+              onClick={resetZoom}
             >
+              <RotateCcw className="size-4" />
               Reset
-            </button>
-          </div>
+            </Button>
 
-          <div className="ml-auto flex items-center gap-2">
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={handlePrint}
               disabled={!pdfUrl}
-              className="inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm disabled:opacity-50"
             >
+              <Printer className="size-4" />
               Print
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
+              size="sm"
               onClick={handleDownload}
               disabled={!pdfUrl}
-              className="bg-primary text-primary-foreground inline-flex h-9 items-center justify-center rounded-md px-3 text-sm disabled:opacity-50"
             >
+              <Download className="size-4" />
               Download
-            </button>
+            </Button>
+          </div>
+
+          <div className="md:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Open toolbar menu"
+                >
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={zoomOut}>
+                  <ZoomOut className="size-4" />
+                  Zoom out
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={zoomIn}>
+                  <ZoomIn className="size-4" />
+                  Zoom in
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={resetZoom}>
+                  <RotateCcw className="size-4" />
+                  Reset zoom
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handlePrint} disabled={!pdfUrl}>
+                  <Printer className="size-4" />
+                  Print
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDownload} disabled={!pdfUrl}>
+                  <Download className="size-4" />
+                  Download
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
 
-      <div className="bg-muted/30 flex-1 overflow-auto p-4">
-        <div className="mx-auto w-fit rounded-lg border bg-white shadow-sm">
+      <div
+        ref={containerRef}
+        className="bg-muted/30 flex-1 overflow-auto p-2 sm:p-4"
+      >
+        <div className="mx-auto w-fit max-w-full rounded-lg border bg-white shadow-sm">
           <Document
             file={pdfUrl}
             options={options}
