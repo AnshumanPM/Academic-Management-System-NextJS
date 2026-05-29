@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import {
   ChevronLeft,
@@ -9,8 +9,6 @@ import {
   MoreHorizontal,
   Printer,
   RotateCcw,
-  ZoomIn,
-  ZoomOut,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -29,86 +27,118 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString();
 
-const options = {
-  cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
-  standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
-};
-
 interface PdfRenderViewerProps {
   pdfUrl: string;
   fileName?: string;
-  initialScale?: number;
   showTextLayer?: boolean;
   showAnnotationLayer?: boolean;
 }
 
+type PdfStageProps = {
+  pdfUrl: string;
+  pageNumber: number;
+  fitWidth?: number;
+  viewMode: "fit" | "actual";
+  showTextLayer: boolean;
+  showAnnotationLayer: boolean;
+  onLoadSuccess: ({ numPages }: { numPages: number }) => void;
+};
+
+const PdfStage = memo(function PdfStage({
+  pdfUrl,
+  pageNumber,
+  fitWidth,
+  viewMode,
+  showTextLayer,
+  showAnnotationLayer,
+  onLoadSuccess,
+}: PdfStageProps) {
+  const options = useMemo(
+    () => ({
+      cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+      standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
+    }),
+    [],
+  );
+
+  return (
+    <Document
+      file={pdfUrl}
+      options={options}
+      onLoadSuccess={onLoadSuccess}
+      loading={
+        <div className="text-muted-foreground p-6 text-center text-sm">
+          Loading PDF...
+        </div>
+      }
+      error={
+        <div className="text-destructive p-6 text-center text-sm">
+          Failed to load PDF.
+        </div>
+      }
+    >
+      <Page
+        pageNumber={pageNumber}
+        width={viewMode === "fit" ? fitWidth : undefined}
+        scale={1}
+        renderTextLayer={showTextLayer}
+        renderAnnotationLayer={showAnnotationLayer}
+      />
+    </Document>
+  );
+});
+
 export function PdfRenderViewer({
   pdfUrl,
   fileName = "document.pdf",
-  initialScale = 1,
   showTextLayer = false,
   showAnnotationLayer = false,
 }: PdfRenderViewerProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
 
   const [numPages, setNumPages] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
-  const [scale, setScale] = useState(initialScale);
-  const [pageWidth, setPageWidth] = useState<number | undefined>(undefined);
+  const [fitWidth, setFitWidth] = useState<number>();
+  const [viewMode, setViewMode] = useState<"fit" | "actual">("fit");
 
   useEffect(() => {
     setNumPages(0);
     setPageNumber(1);
-    setScale(initialScale);
-  }, [pdfUrl, initialScale]);
+    setViewMode("fit");
+  }, [pdfUrl]);
 
   useEffect(() => {
-    const updatePageWidth = () => {
-      const width = window.innerWidth;
+    const updateFitWidth = () => {
+      const el = viewportRef.current;
+      if (!el) return;
 
-      if (width < 640) {
-        setPageWidth(Math.max(260, width - 24));
-        return;
-      }
+      const styles = window.getComputedStyle(el);
+      const paddingX =
+        parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+      const nextWidth = Math.max(260, Math.floor(el.clientWidth - paddingX));
 
-      if (width < 1024) {
-        setPageWidth(Math.min(760, width - 48));
-        return;
-      }
-
-      setPageWidth(820);
-    };
-
-    updatePageWidth();
-    window.addEventListener("resize", updatePageWidth);
-
-    return () => {
-      window.removeEventListener("resize", updatePageWidth);
-    };
-  }, []);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const onWheel = (e: WheelEvent) => {
-      const isDesktop = window.innerWidth >= 1024;
-      const wantsZoom = e.ctrlKey || e.metaKey;
-
-      if (!isDesktop || !wantsZoom) return;
-
-      e.preventDefault();
-
-      setScale((prev) => {
-        const next = e.deltaY < 0 ? prev + 0.1 : prev - 0.1;
-        return Math.min(3, Math.max(0.5, +next.toFixed(1)));
+      setFitWidth((prev) => {
+        if (prev == null) return nextWidth;
+        if (Math.abs(prev - nextWidth) < 8) return prev;
+        return nextWidth;
       });
     };
 
-    el.addEventListener("wheel", onWheel, { passive: false });
+    updateFitWidth();
+
+    const observer = new ResizeObserver(() => {
+      updateFitWidth();
+    });
+
+    if (viewportRef.current) {
+      observer.observe(viewportRef.current);
+    }
+
+    window.addEventListener("resize", updateFitWidth);
 
     return () => {
-      el.removeEventListener("wheel", onWheel);
+      observer.disconnect();
+      window.removeEventListener("resize", updateFitWidth);
     };
   }, []);
 
@@ -117,62 +147,38 @@ export function PdfRenderViewer({
     return Math.min(Math.max(pageNumber, 1), numPages);
   }, [pageNumber, numPages]);
 
-  const zoomOut = () => {
-    setScale((s) => Math.max(0.5, +(s - 0.1).toFixed(1)));
-  };
+  const handleDocumentLoadSuccess = useCallback(
+    ({ numPages }: { numPages: number }) => {
+      setNumPages((prev) => (prev === numPages ? prev : numPages));
+      setPageNumber((prev) => (prev === 1 ? prev : 1));
+    },
+    [],
+  );
 
-  const zoomIn = () => {
-    setScale((s) => Math.min(3, +(s + 0.1).toFixed(1)));
-  };
-
-  const resetZoom = () => {
-    setScale(initialScale);
-  };
-
-  const handleDownload = () => {
+  const handleDownload = useCallback(() => {
     const link = document.createElement("a");
     link.href = pdfUrl;
     link.download = fileName;
     link.click();
-  };
+  }, [pdfUrl, fileName]);
 
-  const isMobileDevice = () => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(max-width: 767px)").matches;
-  };
-
-  const handlePrint = () => {
+  const handlePrint = useCallback(() => {
     if (!pdfUrl) return;
 
     const printWindow = window.open(pdfUrl, "_blank");
     if (!printWindow) return;
 
-    if (isMobileDevice()) {
-      return;
-    }
+    printWindow.focus();
+    printWindow.print();
+  }, [pdfUrl]);
 
-    let printed = false;
-
-    const printOnce = () => {
-      if (printed) return;
-      printed = true;
-
-      try {
-        printWindow.focus();
-        printWindow.print();
-      } catch {}
-    };
-
-    try {
-      printWindow.addEventListener("load", printOnce, { once: true });
-    } catch {}
-
-    window.setTimeout(printOnce, 1200);
-  };
+  const toggleViewMode = useCallback(() => {
+    setViewMode((mode) => (mode === "fit" ? "actual" : "fit"));
+  }, []);
 
   return (
-    <div className="bg-background text-foreground flex h-[90vh] min-h-0 flex-col overflow-hidden rounded-xl border">
-      <div className="bg-card border-b p-2 sm:p-3">
+    <div className="bg-background text-foreground flex h-[90vh] min-h-0 min-w-0 flex-col overflow-hidden border">
+      <div className="bg-card shrink-0 border-b p-2 sm:p-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-1 sm:gap-2">
             <Button
@@ -206,35 +212,12 @@ export function PdfRenderViewer({
             <Button
               type="button"
               variant="outline"
-              size="icon"
-              onClick={zoomOut}
-              aria-label="Zoom out"
-            >
-              <ZoomOut className="size-4" />
-            </Button>
-
-            <div className="text-muted-foreground w-14 text-center text-sm tabular-nums">
-              {Math.round(scale * 100)}%
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={zoomIn}
-              aria-label="Zoom in"
-            >
-              <ZoomIn className="size-4" />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
               size="sm"
-              onClick={resetZoom}
+              className="w-[88px] justify-center"
+              onClick={toggleViewMode}
             >
               <RotateCcw className="size-4" />
-              Reset
+              {viewMode === "fit" ? "100%" : "Fit"}
             </Button>
 
             <Button
@@ -260,7 +243,7 @@ export function PdfRenderViewer({
           </div>
 
           <div className="md:hidden">
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
@@ -272,17 +255,9 @@ export function PdfRenderViewer({
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={zoomOut}>
-                  <ZoomOut className="size-4" />
-                  Zoom out
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={zoomIn}>
-                  <ZoomIn className="size-4" />
-                  Zoom in
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={resetZoom}>
+                <DropdownMenuItem onClick={toggleViewMode}>
                   <RotateCcw className="size-4" />
-                  Reset zoom
+                  {viewMode === "fit" ? "100%" : "Fit"}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handlePrint} disabled={!pdfUrl}>
                   <Printer className="size-4" />
@@ -298,37 +273,22 @@ export function PdfRenderViewer({
         </div>
       </div>
 
-      <div
-        ref={containerRef}
-        className="bg-muted/30 flex-1 overflow-auto p-2 sm:p-4"
-      >
-        <div className="mx-auto w-fit max-w-full rounded-lg border bg-white shadow-sm">
-          <Document
-            file={pdfUrl}
-            options={options}
-            onLoadSuccess={({ numPages }) => {
-              setNumPages(numPages);
-              setPageNumber(1);
-            }}
-            loading={
-              <div className="text-muted-foreground p-6 text-center text-sm">
-                Loading PDF...
-              </div>
-            }
-            error={
-              <div className="text-destructive p-6 text-center text-sm">
-                Failed to load PDF.
-              </div>
-            }
-          >
-            <Page
+      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+        <div
+          ref={viewportRef}
+          className="bg-muted/30 min-h-0 min-w-0 flex-1 overflow-auto p-2 sm:p-4"
+        >
+          <div className="mx-auto w-fit max-w-full">
+            <PdfStage
+              pdfUrl={pdfUrl}
               pageNumber={safePageNumber}
-              width={pageWidth}
-              scale={scale}
-              renderTextLayer={showTextLayer}
-              renderAnnotationLayer={showAnnotationLayer}
+              fitWidth={fitWidth}
+              viewMode={viewMode}
+              showTextLayer={showTextLayer}
+              showAnnotationLayer={showAnnotationLayer}
+              onLoadSuccess={handleDocumentLoadSuccess}
             />
-          </Document>
+          </div>
         </div>
       </div>
     </div>

@@ -51,9 +51,8 @@ export function MarksheetViewer({
   return (
     <PdfRenderViewer
       pdfUrl={instance.url}
-      fileName={`marksheet-${data.studentInfo.registrationNumber}.pdf`}
-      initialScale={1}
-      showTextLayer={true}
+      fileName={`Marksheet-${examLabel}-${data.studentInfo.registrationNumber}.pdf`}
+      showTextLayer={false}
       showAnnotationLayer={false}
     />
   );
