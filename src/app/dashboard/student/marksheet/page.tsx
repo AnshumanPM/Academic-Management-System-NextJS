@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import axios from "axios";
 import { Input } from "@/components/ui/input";
@@ -66,11 +66,20 @@ interface ViewerPayload {
   semester?: string;
 }
 
+const semLabel: Record<string, string> = {
+  "01": "1st Semester",
+  "02": "2nd Semester",
+  "03": "3rd Semester",
+  "04": "4th Semester",
+  "05": "5th Semester",
+  "06": "6th Semester",
+};
+
 export default function MarksheetPage() {
   const currentYear = new Date().getFullYear();
   const [regd, setRegd] = useState("");
   const [sem, setSem] = useState("");
-  const [examCode, setExamCode] = useState(`${currentYear}05`);
+  const [examCode, setExamCode] = useState("");
   const [viewerPayload, setViewerPayload] = useState<ViewerPayload | null>(
     null,
   );
@@ -86,68 +95,45 @@ export default function MarksheetPage() {
     return options;
   }, [currentYear]);
 
-  useEffect(() => {
-    if (regd.length < 3 || !sem) {
-      setExamCode("");
-      return;
-    }
+  const derivedExamCode = useMemo(() => {
+    if (regd.length < 3 || !sem) return "";
 
     const type = regd[0];
     const batchYY = regd.substring(1, 3);
 
-    if (type !== "F" && type !== "L") {
-      setExamCode("");
-      return;
-    }
+    if (type !== "F" && type !== "L") return "";
 
-    const batchNum = parseInt(batchYY, 10);
-    if (isNaN(batchNum)) {
-      setExamCode("");
-      return;
-    }
+    const batchNum = Number.parseInt(batchYY, 10);
+    if (Number.isNaN(batchNum)) return "";
 
     const academicBatch = type === "F" ? batchNum : batchNum - 1;
     const baseYear = 2000 + academicBatch;
 
-    const semesterNum = parseInt(sem, 10);
-    if (isNaN(semesterNum) || semesterNum < 1 || semesterNum > 6) {
-      setExamCode("");
-      return;
+    const semesterNum = Number.parseInt(sem, 10);
+    if (Number.isNaN(semesterNum) || semesterNum < 1 || semesterNum > 6) {
+      return "";
     }
-
-    let examYear: number;
-    let examMonth: string;
 
     if (semesterNum % 2 === 1) {
-      examYear = baseYear + (semesterNum - 1) / 2;
-      examMonth = "12";
-    } else {
-      examYear = baseYear + semesterNum / 2;
-      examMonth = "05";
+      return `${baseYear + (semesterNum - 1) / 2}12`;
     }
 
-    setExamCode(`${examYear}${examMonth}`);
+    return `${baseYear + semesterNum / 2}05`;
   }, [regd, sem]);
 
-  const semLabel: Record<string, string> = {
-    "01": "1st Semester",
-    "02": "2nd Semester",
-    "03": "3rd Semester",
-    "04": "4th Semester",
-    "05": "5th Semester",
-    "06": "6th Semester",
-  };
+  const selectedExamCode = examCode || derivedExamCode;
 
   const fetchResult = async () => {
-    if (!regd.trim() || !sem || !examCode) return;
+    if (!regd.trim() || !sem || !selectedExamCode) return;
 
     setLoading(true);
     setError(null);
+    setViewerPayload(null);
 
     try {
       const response = await axios.post(
         "/api/origin/result",
-        { regd, sem, examCode },
+        { regd, sem, examCode: selectedExamCode },
         {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
@@ -157,9 +143,8 @@ export default function MarksheetPage() {
       const data = response.data;
 
       if (data.status === 200) {
-        const examLabel = examCode
-          ? `${examOptions[examCode] ?? examCode} ${semLabel[sem] ?? ""}`
-          : undefined;
+        const examLabel =
+          `${examOptions[selectedExamCode] ?? selectedExamCode} ${semLabel[sem] ?? ""}`.trim();
 
         setViewerPayload({
           data: data.data,
@@ -186,13 +171,22 @@ export default function MarksheetPage() {
             type="text"
             placeholder="Registration Number"
             value={regd}
-            onChange={(e) => setRegd(e.target.value.toUpperCase())}
+            onChange={(e) => {
+              setRegd(e.target.value.toUpperCase());
+              setExamCode("");
+            }}
             onKeyDown={(e) => e.key === "Enter" && fetchResult()}
           />
         </div>
 
         <div className="w-full md:max-w-xs">
-          <Select value={sem} onValueChange={setSem}>
+          <Select
+            value={sem}
+            onValueChange={(value) => {
+              setSem(value);
+              setExamCode("");
+            }}
+          >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select Semester" />
             </SelectTrigger>
@@ -208,7 +202,7 @@ export default function MarksheetPage() {
         </div>
 
         <div className="w-full md:max-w-xs">
-          <Select value={examCode} onValueChange={setExamCode}>
+          <Select value={selectedExamCode} onValueChange={setExamCode}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Exam Code" />
             </SelectTrigger>
@@ -228,7 +222,7 @@ export default function MarksheetPage() {
           <Button
             className="w-full"
             onClick={fetchResult}
-            disabled={loading || !regd.trim() || !sem || !examCode}
+            disabled={loading || !regd.trim() || !sem || !selectedExamCode}
           >
             {loading ? (
               <>
