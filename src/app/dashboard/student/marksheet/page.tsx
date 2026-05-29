@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import axios from "axios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,21 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle } from "lucide-react";
-import { MarksheetViewer } from "@/components/reports/marksheet/MarksheetViewer";
+
+const MarksheetViewer = dynamic(
+  () =>
+    import("@/components/reports/marksheet/MarksheetViewer").then(
+      (m) => m.MarksheetViewer,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="bg-muted/30 text-muted-foreground mt-6 rounded-lg border p-6 text-sm">
+        Loading viewer...
+      </div>
+    ),
+  },
+);
 
 interface StudentInfo {
   registrationNumber: string;
@@ -45,25 +60,31 @@ interface ResultData {
   result: string;
 }
 
+interface ViewerPayload {
+  data: ResultData;
+  examLabel?: string;
+  semester?: string;
+}
+
 export default function MarksheetPage() {
   const currentYear = new Date().getFullYear();
   const [regd, setRegd] = useState("");
   const [sem, setSem] = useState("");
   const [examCode, setExamCode] = useState(`${currentYear}05`);
-  const [resultData, setResultData] = useState<ResultData | null>(null);
+  const [viewerPayload, setViewerPayload] = useState<ViewerPayload | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const generateExamOptions = () => {
+  const examOptions = useMemo(() => {
     const options: Record<string, string> = {};
     for (let year = currentYear; year >= 2020; year--) {
       options[`${year}05`] = `${year} Summer`;
       options[`${year}12`] = `${year} Winter`;
     }
     return options;
-  };
-
-  const examOptions = generateExamOptions();
+  }, [currentYear]);
 
   useEffect(() => {
     if (regd.length < 3 || !sem) {
@@ -108,12 +129,20 @@ export default function MarksheetPage() {
     setExamCode(`${examYear}${examMonth}`);
   }, [regd, sem]);
 
+  const semLabel: Record<string, string> = {
+    "01": "1st Semester",
+    "02": "2nd Semester",
+    "03": "3rd Semester",
+    "04": "4th Semester",
+    "05": "5th Semester",
+    "06": "6th Semester",
+  };
+
   const fetchResult = async () => {
     if (!regd.trim() || !sem || !examCode) return;
 
     setLoading(true);
     setError(null);
-    setResultData(null);
 
     try {
       const response = await axios.post(
@@ -128,7 +157,15 @@ export default function MarksheetPage() {
       const data = response.data;
 
       if (data.status === 200) {
-        setResultData(data.data);
+        const examLabel = examCode
+          ? `${examOptions[examCode] ?? examCode} ${semLabel[sem] ?? ""}`
+          : undefined;
+
+        setViewerPayload({
+          data: data.data,
+          examLabel,
+          semester: semLabel[sem],
+        });
       } else {
         setError(data.detail?.[0]?.msg || "Failed to fetch result");
       }
@@ -138,19 +175,6 @@ export default function MarksheetPage() {
       setLoading(false);
     }
   };
-
-  const semLabel: Record<string, string> = {
-    "01": "1st Semester",
-    "02": "2nd Semester",
-    "03": "3rd Semester",
-    "04": "4th Semester",
-    "05": "5th Semester",
-    "06": "6th Semester",
-  };
-
-  const examLabel = examCode
-    ? `${examOptions[examCode] ?? examCode} ${semLabel[sem] ?? ""}`
-    : undefined;
 
   return (
     <div className="flex w-full flex-col px-2 py-4">
@@ -225,12 +249,12 @@ export default function MarksheetPage() {
         </Alert>
       )}
 
-      {resultData && (
+      {viewerPayload && (
         <div className="mt-6">
           <MarksheetViewer
-            data={resultData}
-            examLabel={examLabel}
-            semester={semLabel[sem]}
+            data={viewerPayload.data}
+            examLabel={viewerPayload.examLabel}
+            semester={viewerPayload.semester}
           />
         </div>
       )}

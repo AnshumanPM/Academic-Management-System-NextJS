@@ -1,17 +1,24 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { pdf } from "@react-pdf/renderer";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 import {
   MarksheetDocument,
   MarksheetData,
 } from "@/components/reports/marksheet/MarksheetDocument";
 
-const PDFViewer = dynamic(
-  () => import("@react-pdf/renderer").then((m) => m.PDFViewer),
-  { ssr: false },
-);
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url,
+).toString();
+
+const options = {
+  cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+  standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
+};
 
 interface MarksheetViewerProps {
   data: MarksheetData;
@@ -19,139 +26,203 @@ interface MarksheetViewerProps {
   semester?: string;
 }
 
-const BASE_WIDTH = 794;
-const BASE_HEIGHT = 1123;
-
 export function MarksheetViewer({
   data,
   examLabel,
   semester,
 }: MarksheetViewerProps) {
-  const [zoom, setZoom] = useState(1);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [loadingPdf, setLoadingPdf] = useState(true);
+  const [numPages, setNumPages] = useState(0);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [scale, setScale] = useState(1.2);
+  const previousUrlRef = useRef<string | null>(null);
 
-  const viewerSize = useMemo(
-    () => ({
-      width: Math.round(BASE_WIDTH * zoom),
-      height: Math.round(BASE_HEIGHT * zoom),
-    }),
-    [zoom],
+  const docElement = useMemo(
+    () => (
+      <MarksheetDocument
+        data={data}
+        examLabel={examLabel}
+        semester={semester}
+      />
+    ),
+    [data, examLabel, semester],
   );
 
-  const handleExportPDF = async () => {
-    const blob = await pdf(
-      <MarksheetDocument
-        data={data}
-        examLabel={examLabel}
-        semester={semester}
-      />,
-    ).toBlob();
+  useEffect(() => {
+    let active = true;
+    setLoadingPdf(true);
+    setNumPages(0);
+    setPageNumber(1);
 
-    const url = URL.createObjectURL(blob);
+    pdf(docElement)
+      .toBlob()
+      .then((blob) => {
+        if (!active) return;
+        const nextUrl = URL.createObjectURL(blob);
+        if (previousUrlRef.current) {
+          URL.revokeObjectURL(previousUrlRef.current);
+        }
+        previousUrlRef.current = nextUrl;
+        setFileUrl(nextUrl);
+        setLoadingPdf(false);
+      })
+      .catch(() => {
+        if (!active) return;
+        setFileUrl(null);
+        setLoadingPdf(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [docElement]);
+
+  useEffect(() => {
+    return () => {
+      if (previousUrlRef.current) {
+        URL.revokeObjectURL(previousUrlRef.current);
+      }
+    };
+  }, []);
+
+  const handleDownload = () => {
+    if (!fileUrl) return;
     const a = document.createElement("a");
-    a.href = url;
+    a.href = fileUrl;
     a.download = `marksheet-${data.studentInfo.registrationNumber}.pdf`;
     a.click();
-    URL.revokeObjectURL(url);
   };
 
-  const handlePrint = async () => {
-    const blob = await pdf(
-      <MarksheetDocument
-        data={data}
-        examLabel={examLabel}
-        semester={semester}
-      />,
-    ).toBlob();
-
-    const url = URL.createObjectURL(blob);
-    const win = window.open(url);
-
+  const handlePrint = () => {
+    if (!fileUrl) return;
+    const win = window.open(fileUrl, "_blank");
     if (!win) return;
-
     win.addEventListener("load", () => {
       win.print();
-      URL.revokeObjectURL(url);
     });
   };
 
   return (
-    <div className="bg-background text-foreground flex h-screen flex-col">
-      {/* <div className="border-b bg-card shadow-sm">
-        <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-          <span className="text-sm font-semibold tracking-tight">
-            Marksheet Viewer
-          </span>
-
+    <div className="bg-background text-foreground flex h-[90vh] flex-col overflow-hidden rounded-lg border">
+      <div className="bg-card border-b">
+        <div className="flex flex-wrap items-center gap-2 px-3 py-3">
           <button
-            onClick={handlePrint}
-            className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            type="button"
+            onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+            disabled={!numPages || pageNumber <= 1}
+            className="inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm disabled:opacity-50"
           >
-            Print
+            Prev
           </button>
 
+          <div className="min-w-24 text-sm tabular-nums">
+            {numPages ? `${pageNumber} / ${numPages}` : "0 / 0"}
+          </div>
+
           <button
-            onClick={handleExportPDF}
-            className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            type="button"
+            onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
+            disabled={!numPages || pageNumber >= numPages}
+            className="inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm disabled:opacity-50"
           >
-            Export PDF
+            Next
           </button>
 
-          <div className="ml-auto flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2 py-1">
-            <span className="px-1 text-xs font-medium text-muted-foreground">
-              Zoom
-            </span>
-
+          <div className="ml-2 flex items-center gap-2">
             <button
-              onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.1).toFixed(1)))}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+              type="button"
+              onClick={() =>
+                setScale((s) => Math.max(0.6, +(s - 0.1).toFixed(1)))
+              }
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border text-sm"
             >
               -
             </button>
 
-            <span className="w-14 text-center text-xs font-medium tabular-nums text-muted-foreground">
-              {Math.round(zoom * 100)}%
-            </span>
+            <div className="w-16 text-center text-sm tabular-nums">
+              {Math.round(scale * 100)}%
+            </div>
 
             <button
-              onClick={() => setZoom((z) => Math.min(2, +(z + 0.1).toFixed(1)))}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+              type="button"
+              onClick={() =>
+                setScale((s) => Math.min(2.5, +(s + 0.1).toFixed(1)))
+              }
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border text-sm"
             >
               +
             </button>
 
             <button
-              onClick={() => setZoom(1)}
-              className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-background px-3 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+              type="button"
+              onClick={() => setScale(1.2)}
+              className="inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm"
             >
               Reset
             </button>
           </div>
-        </div>
-      </div> */}
 
-      <div className="bg-muted/30 flex flex-1 justify-center overflow-auto p-6">
-        <div
-          className="border-border bg-background overflow-hidden rounded-lg border shadow-sm"
-          style={{
-            // width: viewerSize.width,
-            // height: viewerSize.height,
-            // minWidth: viewerSize.width,
-            width: "100%",
-            height: "100%",
-          }}
-        >
-          <PDFViewer
-            width={"100%"}
-            height={"100%"}
-            // showToolbar={false}
-          >
-            <MarksheetDocument
-              data={data}
-              examLabel={examLabel}
-              semester={semester}
-            />
-          </PDFViewer>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handlePrint}
+              disabled={!fileUrl}
+              className="inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm disabled:opacity-50"
+            >
+              Print
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDownload}
+              disabled={!fileUrl}
+              className="bg-primary text-primary-foreground inline-flex h-9 items-center justify-center rounded-md px-3 text-sm disabled:opacity-50"
+            >
+              Download
+            </button>
+          </div>
         </div>
+      </div>
+
+      <div className="bg-muted/30 flex-1 overflow-auto p-4">
+        {loadingPdf ? (
+          <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
+            Generating preview...
+          </div>
+        ) : fileUrl ? (
+          <div className="mx-auto w-fit rounded-lg border bg-white shadow-sm">
+            <Document
+              file={fileUrl}
+              onLoadSuccess={({ numPages }) => {
+                setNumPages(numPages);
+                setPageNumber(1);
+              }}
+              options={options}
+              loading={
+                <div className="text-muted-foreground p-6 text-center text-sm">
+                  Loading PDF...
+                </div>
+              }
+              error={
+                <div className="text-destructive p-6 text-center text-sm">
+                  Failed to load PDF.
+                </div>
+              }
+            >
+              <Page
+                pageNumber={pageNumber}
+                scale={scale}
+                renderAnnotationLayer
+                renderTextLayer
+              />
+            </Document>
+          </div>
+        ) : (
+          <div className="text-destructive flex h-full items-center justify-center text-sm">
+            Failed to generate preview.
+          </div>
+        )}
       </div>
     </div>
   );
