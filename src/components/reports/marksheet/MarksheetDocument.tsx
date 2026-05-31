@@ -303,8 +303,8 @@ export function MarksheetDocument({
             <Text style={tw("text-[10px] font-bold ml-1")}>{result}</Text>
           </View>
 
-          <View style={tw("flex-1 justify-center py-3")}>
-            {/* <View style={tw("flex flex-row justify-between items-end")}>
+          {/* <View style={tw("flex-1 justify-center py-3")}>
+            <View style={tw("flex flex-row justify-between items-end")}>
               <View style={tw("items-center text-center")}>
                 <Text style={tw("text-[8.5px] font-bold")}>CHECKED BY</Text>
               </View>
@@ -329,15 +329,15 @@ export function MarksheetDocument({
                   VOCATIONALTRAINING, ODISHA
                 </Text>
               </View>
-            </View> */}
-          </View>
+            </View>
+          </View> */}
 
-          <View style={tw("border border-foreground p-3")}>
+          {/* <View style={tw("border border-foreground p-3")}>
             <Text style={tw("text-[8.5px]")}>
               N B :- After Signature of the Prinicipal of the concerned
               institute this document will be treated as a valid document.
             </Text>
-          </View>
+          </View> */}
         </View>
       </Page>
     </Document>
