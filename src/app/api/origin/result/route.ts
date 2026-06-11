@@ -40,6 +40,9 @@ async function getOriginResData(
       "https://sctevt-dashboard.anshumanpm.in/get_marks_info",
       {
         params: { regd: rollNo, sem: sem, ymcode: examCode },
+        headers: {
+          "X-API-Access-Key": process.env.API_ACCESS_KEY as string,
+        },
         timeout: timeout,
       },
     );
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await authSession();
 
-    if (!session) {
+    if (!session?.user) {
       return NextResponse.json(
         { status: 401, message: "Unauthorized" },
         { status: 401 },

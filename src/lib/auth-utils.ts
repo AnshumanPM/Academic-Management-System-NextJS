@@ -137,7 +137,7 @@ export const signUp = async (
 
 export const authSession = async () => {
   try {
-    const session = auth.api.getSession({ headers: await headers() });
+    const session = await auth.api.getSession({ headers: await headers() });
 
     if (!session) {
       throw new Error("Unauthorized: No valid session found");
