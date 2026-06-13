@@ -8,7 +8,7 @@ import {
 import { ac, roleObjects } from "@/lib/permissions";
 
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_API_URL!,
+  // baseURL: process.env.NEXT_PUBLIC_API_URL!,
   plugins: [
     adminClient({
       ac,

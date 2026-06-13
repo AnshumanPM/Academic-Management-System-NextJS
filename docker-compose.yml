@@ -1,0 +1,11 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ams_dashboard
+    ports:
+      - "${HOST_PORT}:3000"
+    env_file:
+      - .env
+    restart: unless-stopped
