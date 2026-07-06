@@ -14,6 +14,8 @@ import { DashboardBreadcrumb } from "@/components/dashboard-breadcrumb";
 import DashboardFooter from "@/components/dashboard-footer";
 import DashboardHeader from "@/components/dashboard-header";
 import AnnouncementBar from "@/components/announcement-bar";
+import AntiAdblocker from "@/components/ads/anti-adblocker";
+import AdsViewer from "@/components/ads/ads-viewer";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +43,7 @@ export default async function DashboardLayout({
       <AppSidebar navItems={navItems} user={sidebarUser} />
 
       <SidebarInset>
+        <AntiAdblocker />
         <AnnouncementBar />
         <DashboardHeader />
         {/* Header */}
@@ -58,6 +61,7 @@ export default async function DashboardLayout({
 
         {/* Main Content */}
         <main className="min-h-screen flex-1">{children}</main>
+        <AdsViewer />
         <DashboardFooter />
       </SidebarInset>
     </SidebarProvider>
