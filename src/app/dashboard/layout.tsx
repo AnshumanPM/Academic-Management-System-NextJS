@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { DashboardBreadcrumb } from "@/components/dashboard-breadcrumb";
 import DashboardFooter from "@/components/dashboard-footer";
 import DashboardHeader from "@/components/dashboard-header";
+import AnnouncementBar from "@/components/announcement-bar";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,7 @@ export default async function DashboardLayout({
       <AppSidebar navItems={navItems} user={sidebarUser} />
 
       <SidebarInset>
+        <AnnouncementBar />
         <DashboardHeader />
         {/* Header */}
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
