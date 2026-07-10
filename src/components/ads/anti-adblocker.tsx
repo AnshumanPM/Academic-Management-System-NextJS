@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CustomWarning } from "@/components/custom-warning";
 
 export default function AntiAdblocker() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -21,8 +22,7 @@ export default function AntiAdblocker() {
 
   return (
     <>
-      <link rel="stylesheet" href="https://xcdn.in/AntiAdblocker/style.css" />
-      <div id="ad-chk" className="adChkDiv adhidden">
+      <div id="ad-chk" className="pointer-events-none absolute -z-10 opacity-0">
         <iframe
           ref={iframeRef}
           data-aa="2304846"
@@ -39,38 +39,14 @@ export default function AntiAdblocker() {
       </div>
 
       {showWarning && (
-        <div className="adblcr" id="superadblocker">
-          <div className="textsshow">
-            <svg
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-              style={{ width: "48px", height: "48px" }}
-            >
-              <circle cx="12" cy="12" r="10" stroke="black" fill="none" />
-              <line
-                x1="12"
-                x2="12"
-                y1="8"
-                y2="12"
-                stroke="black"
-                strokeWidth="2"
-              />
-              <line
-                x1="12"
-                x2="12.01"
-                y1="16"
-                y2="16"
-                stroke="black"
-                strokeWidth="2"
-              />
-            </svg>
-            <h2>AdBlock Detected!</h2>
-            <p>
-              Our website is made possible by displaying ads to our visitors.
-              Please support us by whitelisting our website.
-            </p>
-          </div>
-        </div>
+        <CustomWarning
+          heading="AdBlock Detected!"
+          description="Our website is made possible by displaying ads to our visitors. Please support us by whitelisting our website."
+          actionButton={{
+            label: "I've Disabled Adblocker — Reload",
+            href: window.location.href,
+          }}
+        />
       )}
     </>
   );

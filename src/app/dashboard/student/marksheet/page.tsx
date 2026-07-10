@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import axios from "axios";
+import { useLimitStore } from "@/store/useLimitStore";
+import { LimitWarning } from "@/components/limit-warning";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -85,6 +87,13 @@ export default function MarksheetPage() {
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showLimitWarning, setShowLimitWarning] = useState(false);
+
+  const usedCount = useLimitStore((s) => s.usedCount);
+  const maxLimit = useLimitStore((s) => s.maxLimit);
+  const doOperation = useLimitStore((s) => s.doOperation);
+
+  const canDoOperation = usedCount < maxLimit;
 
   const examOptions = useMemo(() => {
     const options: Record<string, string> = {};
@@ -126,6 +135,11 @@ export default function MarksheetPage() {
   const fetchResult = async () => {
     if (!regd.trim() || !sem || !selectedExamCode) return;
 
+    if (!canDoOperation) {
+      setShowLimitWarning(true);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setViewerPayload(null);
@@ -143,6 +157,7 @@ export default function MarksheetPage() {
       const data = response.data;
 
       if (data.status === 200) {
+        doOperation();
         const examLabel =
           `${examOptions[selectedExamCode] ?? selectedExamCode} ${semLabel[sem] ?? ""}`.trim();
 
@@ -163,6 +178,9 @@ export default function MarksheetPage() {
 
   return (
     <div className="flex w-full flex-col px-2 py-4">
+      {showLimitWarning && (
+        <LimitWarning onDismiss={() => setShowLimitWarning(false)} />
+      )}
       <h1 className="mb-6 text-center text-2xl font-bold">Student Marksheet</h1>
 
       <div className="flex w-full flex-col items-center gap-4 md:flex-row md:justify-center">
