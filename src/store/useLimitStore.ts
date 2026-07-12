@@ -14,7 +14,7 @@ export const useLimitStore = create<LimitStore>()(
   persist(
     (set, get) => ({
       usedCount: 0,
-      maxLimit: 15,
+      maxLimit: 10,
 
       doOperation: () => {
         const { usedCount, maxLimit } = get();
