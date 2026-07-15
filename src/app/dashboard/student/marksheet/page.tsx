@@ -89,11 +89,8 @@ export default function MarksheetPage() {
   const [error, setError] = useState<string | null>(null);
   const [showLimitWarning, setShowLimitWarning] = useState(false);
 
-  const usedCount = useLimitStore((s) => s.usedCount);
-  const maxLimit = useLimitStore((s) => s.maxLimit);
+  const canOperate = useLimitStore((s) => s.canOperate);
   const doOperation = useLimitStore((s) => s.doOperation);
-
-  const canDoOperation = usedCount < maxLimit;
 
   const examOptions = useMemo(() => {
     const options: Record<string, string> = {};
@@ -135,7 +132,7 @@ export default function MarksheetPage() {
   const fetchResult = async () => {
     if (!regd.trim() || !sem || !selectedExamCode) return;
 
-    if (!canDoOperation) {
+    if (!canOperate()) {
       setShowLimitWarning(true);
       return;
     }

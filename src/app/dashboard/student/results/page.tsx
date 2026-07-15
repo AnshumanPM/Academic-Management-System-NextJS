@@ -61,11 +61,8 @@ export default function Results() {
   const [error, setError] = useState<string | null>(null);
   const [showLimitWarning, setShowLimitWarning] = useState(false);
 
-  const usedCount = useLimitStore((s) => s.usedCount);
-  const maxLimit = useLimitStore((s) => s.maxLimit);
+  const canOperate = useLimitStore((s) => s.canOperate);
   const doOperation = useLimitStore((s) => s.doOperation);
-
-  const canDoOperation = usedCount < maxLimit;
 
   const generateExamOptions = () => {
     const options: Record<string, string> = {};
@@ -124,7 +121,7 @@ export default function Results() {
   const fetchResult = async () => {
     if (!regd.trim() || !sem || !examCode) return;
 
-    if (!canDoOperation) {
+    if (!canOperate()) {
       setShowLimitWarning(true);
       return;
     }
