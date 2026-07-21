@@ -153,7 +153,7 @@ export const useLimitStore = create<LimitStore>()(
 
     {
       name: "limit-store",
-      version: 2,
+      version: 3,
 
       storage: createJSONStorage(() => localStorage),
 
