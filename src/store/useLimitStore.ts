@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 export const FREE_LIMIT = 3;
-export const WINDOW_DURATION = 6 * 60 * 60 * 1000;
+export const WINDOW_DURATION = 2 * 60 * 60 * 1000;
 
 type LimitStore = {
   usedCount: number;
