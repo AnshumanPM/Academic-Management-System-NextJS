@@ -39,6 +39,10 @@ export const studentNavConfig = [
     items: [
       { title: "Results", url: "/dashboard/student/results" },
       { title: "Marksheet", url: "/dashboard/student/marksheet" },
+      {
+        title: "Provisional Marksheet",
+        url: "/dashboard/student/provisional-marksheet",
+      },
       // { title: "Profile", url: "/dashboard/student/profile" },
     ],
   },
