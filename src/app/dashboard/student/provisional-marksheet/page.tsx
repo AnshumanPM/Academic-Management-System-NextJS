@@ -225,7 +225,7 @@ export default function MarksheetPage() {
         <div className="w-full md:max-w-sm">
           <Input
             type="text"
-            placeholder="Registration Number (e.g. F23015007001)"
+            placeholder="Registration Number"
             value={regd}
             onChange={(e) => {
               setRegd(e.target.value.toUpperCase());
