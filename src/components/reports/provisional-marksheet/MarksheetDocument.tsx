@@ -284,11 +284,7 @@ function calcDivision(
   overriddenSems: Set<string>,
 ): string {
   const allPassed = Object.values(semData).every((sd) =>
-    sd.marksData.every((m) => {
-      const secured = Number(m.securedTotal) || 0;
-      const pass = Number(m.totalPassMark) || 0;
-      return secured >= pass;
-    }),
+    sd.result?.trim().toLowerCase().startsWith("pass")
   );
   const pct = effectiveFull > 0 ? (admissible / effectiveFull) * 100 : 0;
   const isFirstDivision = pct >= 60;
