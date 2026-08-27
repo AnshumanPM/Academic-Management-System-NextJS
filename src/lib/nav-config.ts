@@ -32,17 +32,32 @@ export const adminNavConfig = [
 
 export const studentNavConfig = [
   {
-    title: "Student",
-    url: "/dashboard/student",
+    title: "SCTEVT",
+    url: "/dashboard/student/sctevt",
     icon: "User",
     isActive: true,
     items: [
-      { title: "Results", url: "/dashboard/student/results" },
-      { title: "Marksheet", url: "/dashboard/student/marksheet" },
+      { title: "Results", url: "/dashboard/student/sctevt/results" },
+      { title: "Marksheet", url: "/dashboard/student/sctevt/marksheet" },
       {
         title: "Provisional Marksheet",
-        url: "/dashboard/student/provisional-marksheet",
+        url: "/dashboard/student/sctevt/provisional-marksheet",
       },
+      // { title: "Profile", url: "/dashboard/student/profile" },
+    ],
+  },
+  {
+    title: "BPUT",
+    url: "/dashboard/student/bput",
+    icon: "User",
+    isActive: true,
+    items: [
+      { title: "Results", url: "/dashboard/student/bput/results" },
+      // { title: "Marksheet", url: "/dashboard/student/sctevt/marksheet" },
+      // {
+      //   title: "Provisional Marksheet",
+      //   url: "/dashboard/student/sctevt/provisional-marksheet",
+      // },
       // { title: "Profile", url: "/dashboard/student/profile" },
     ],
   },

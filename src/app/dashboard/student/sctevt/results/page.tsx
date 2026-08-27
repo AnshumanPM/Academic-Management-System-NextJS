@@ -131,7 +131,7 @@ export default function Results() {
 
     try {
       const response = await axios.post(
-        "/api/origin/result",
+        "/api/origin/sctevt/results",
         { regd, sem, examCode },
         {
           headers: {

@@ -143,7 +143,7 @@ export default function MarksheetPage() {
 
     try {
       const response = await axios.post(
-        "/api/origin/result",
+        "/api/origin/sctevt/results",
         { regd, sem, examCode: selectedExamCode },
         {
           headers: { "Content-Type": "application/json" },

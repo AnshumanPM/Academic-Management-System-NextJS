@@ -41,7 +41,7 @@ async function getOriginResData(
       {
         params: { regd: rollNo, sem: sem, ymcode: examCode },
         headers: {
-          "X-API-Access-Key": process.env.API_ACCESS_KEY as string,
+          "X-API-Access-Key": process.env.SCTEVT_API_ACCESS_KEY as string,
         },
         timeout: timeout,
       },

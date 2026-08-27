@@ -128,7 +128,7 @@ export default function MarksheetPage() {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         const resp = await axios.post(
-          "/api/origin/result",
+          "/api/origin/sctevt/results",
           { regd: regd.trim(), sem, examCode },
           {
             headers: { "Content-Type": "application/json" },

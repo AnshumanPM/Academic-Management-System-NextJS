@@ -4,11 +4,14 @@ import { Document, Page, View, Text } from "@react-pdf/renderer";
 import { tw } from "@/lib/utils";
 
 const borderColor = "#000000";
-const CODE_W = 34;
-const MARK_W = 40;
-const ROW_H = 11;
-const TITLE_H = 18;
-const TOTAL_H = 18;
+const CODE_W = 30;
+const MARK_W = 34;
+const MIN_ROW_H = 10;
+const TITLE_H = 16;
+const TOTAL_H = 16;
+const TABLE_FONT = 6.5;
+const HEADER_FONT = 7;
+const TITLE_FONT = 8;
 
 export interface MarksEntry {
   subjectCode: string | null;
@@ -56,6 +59,11 @@ interface SemesterBlock {
   marksData: MarksEntry[];
 }
 
+type RowItem =
+  | { type: "subject"; row: MarksEntry }
+  | { type: "sessional"; row: MarksEntry }
+  | { type: "filler" };
+
 function getSubjectRows(marksData: MarksEntry[]) {
   return marksData.filter((m) => m.sortingOrder < 100);
 }
@@ -73,24 +81,65 @@ function examCodeToLabel(code: string): string {
   return month === "05" ? `Summer-${year}` : `Winter-${year}`;
 }
 
-function DataRow({
-  code,
-  name,
-  full,
-  secured,
-  blank = false,
+function buildRowItems(marksData: MarksEntry[]): RowItem[] {
+  const items: RowItem[] = getSubjectRows(marksData).map((row) => ({
+    type: "subject",
+    row,
+  }));
+  const sessional = getSessional(marksData);
+  if (sessional) items.push({ type: "sessional", row: sessional });
+  return items;
+}
+
+function padRowItems(items: RowItem[], length: number): RowItem[] {
+  const padded = [...items];
+  while (padded.length < length) padded.push({ type: "filler" });
+  return padded;
+}
+
+function PairRow({
+  left,
+  right,
 }: {
-  code: string;
-  name: string;
-  full: string;
-  secured: string;
-  blank?: boolean;
+  left: React.ReactNode;
+  right: React.ReactNode;
 }) {
+  return (
+    <View style={tw("flex flex-row")}>
+      <View style={{ flex: 1 }}>{left}</View>
+      <View style={{ width: 14 }} />
+      <View style={{ flex: 1 }}>{right}</View>
+    </View>
+  );
+}
+
+function DataRow({ item }: { item: RowItem }) {
+  const code = item.type === "subject" ? item.row.paperTypeCode : "";
+  const name =
+    item.type === "subject"
+      ? item.row.subjectName
+      : item.type === "sessional"
+        ? "Sessional"
+        : "";
+  const full =
+    item.type === "subject"
+      ? item.row.semYearFullMark
+      : item.type === "sessional"
+        ? item.row.totalFullMark
+        : "";
+  const secured =
+    item.type === "subject"
+      ? item.row.securedTotal
+      : item.type === "sessional"
+        ? item.row.securedTotal
+        : "";
+
   return (
     <View
       style={{
         ...tw("flex flex-row border-l border-r"),
-        height: ROW_H,
+        flexGrow: 1,
+        minHeight: MIN_ROW_H,
         borderColor,
       }}
     >
@@ -100,9 +149,10 @@ function DataRow({
           borderColor,
           width: CODE_W,
           justifyContent: "center",
+          paddingVertical: 1,
         }}
       >
-        <Text style={tw("text-[8px] pl-1")}>{blank ? "" : code}</Text>
+        <Text style={tw(`text-[${TABLE_FONT}px] pl-1`)}>{code}</Text>
       </View>
       <View
         style={{
@@ -110,9 +160,10 @@ function DataRow({
           borderColor,
           flex: 1,
           justifyContent: "center",
+          paddingVertical: 1,
         }}
       >
-        <Text style={tw("text-[8px] pl-1")}>{blank ? "" : name}</Text>
+        <Text style={tw(`text-[${TABLE_FONT}px] pl-1`)}>{name}</Text>
       </View>
       <View
         style={{
@@ -120,118 +171,101 @@ function DataRow({
           borderColor,
           width: MARK_W,
           justifyContent: "center",
+          paddingVertical: 1,
         }}
       >
-        <Text style={tw("text-[8px] font-bold text-right pr-1")}>
-          {blank ? "" : full}
+        <Text style={tw(`text-[${TABLE_FONT}px] font-bold text-right pr-1`)}>
+          {full}
         </Text>
       </View>
-      <View style={{ width: MARK_W, justifyContent: "center" }}>
-        <Text style={tw("text-[8px] font-bold text-right pr-1")}>
-          {blank ? "" : secured}
+      <View
+        style={{
+          width: MARK_W,
+          justifyContent: "center",
+          paddingVertical: 1,
+        }}
+      >
+        <Text style={tw(`text-[${TABLE_FONT}px] font-bold text-right pr-1`)}>
+          {secured}
         </Text>
       </View>
     </View>
   );
 }
 
-function SemesterRows({
-  semester,
-  maxRows,
-}: {
-  semester: SemesterBlock;
-  maxRows: number;
-}) {
-  const subjectRows = getSubjectRows(semester.marksData);
-  const sessional = getSessional(semester.marksData);
-  const total = getTotal(semester.marksData);
-  const fillerCount = maxRows - subjectRows.length;
-  const fillers = Array.from({ length: fillerCount });
-
+function TitleBar({ title }: { title: string }) {
   return (
-    <>
-      <View
-        style={{
-          ...tw("flex flex-row border-b"),
-          borderColor,
-          height: TITLE_H,
-        }}
-      >
-        <Text style={tw("text-[9px] font-bold pl-1 self-center")}>
-          {semester.title}
+    <View
+      style={{
+        ...tw("flex flex-row border-b"),
+        borderColor,
+        flexGrow: 1,
+        minHeight: TITLE_H,
+        justifyContent: "center",
+      }}
+    >
+      <Text style={tw(`text-[${TITLE_FONT}px] font-bold pl-1 self-center`)}>
+        {title}
+      </Text>
+    </View>
+  );
+}
+
+function TotalBar({ total }: { total?: MarksEntry }) {
+  return (
+    <View
+      style={{
+        ...tw("flex flex-row border-t-2 border-b border-l border-r"),
+        borderColor,
+        flexGrow: 1,
+        minHeight: TOTAL_H,
+        justifyContent: "center",
+      }}
+    >
+      <View style={{ width: CODE_W }} />
+      <View style={{ flex: 1, justifyContent: "center" }}>
+        <Text style={tw(`text-[${TABLE_FONT}px] font-bold pl-1`)}>Total</Text>
+      </View>
+      <View style={{ width: MARK_W, justifyContent: "center" }}>
+        <Text style={tw(`text-[${TABLE_FONT}px] font-bold text-right pr-1`)}>
+          {total?.totalFullMark}
         </Text>
       </View>
-
-      {subjectRows.map((row) => (
-        <DataRow
-          key={`${semester.title}-${row.sortingOrder}`}
-          code={row.paperTypeCode}
-          name={row.subjectName}
-          full={row.semYearFullMark}
-          secured={row.securedTotal}
-        />
-      ))}
-
-      {sessional && (
-        <DataRow
-          code=""
-          name="Sessional"
-          full={sessional.totalFullMark}
-          secured={sessional.securedTotal}
-        />
-      )}
-
-      {fillers.map((_, i) => (
-        <DataRow key={`filler-${i}`} code="" name="" full="" secured="" blank />
-      ))}
-
-      <View
-        style={{
-          ...tw("flex flex-row border-t-2 border-b border-l border-r"),
-          borderColor,
-          height: TOTAL_H,
-          justifyContent: "center",
-        }}
-      >
-        <View style={{ width: CODE_W }} />
-        <View style={{ flex: 1, justifyContent: "center" }}>
-          <Text style={tw("text-[8px] font-bold pl-1")}>Total</Text>
-        </View>
-        <View style={{ width: MARK_W, justifyContent: "center" }}>
-          <Text style={tw("text-[8px] font-bold text-right pr-1")}>
-            {total?.totalFullMark}
-          </Text>
-        </View>
-        <View style={{ width: MARK_W, justifyContent: "center" }}>
-          <Text style={tw("text-[8px] font-bold text-right pr-1")}>
-            {total?.securedTotal}
-          </Text>
-        </View>
+      <View style={{ width: MARK_W, justifyContent: "center" }}>
+        <Text style={tw(`text-[${TABLE_FONT}px] font-bold text-right pr-1`)}>
+          {total?.securedTotal}
+        </Text>
       </View>
-    </>
+    </View>
   );
 }
 
 function TableHeader() {
   return (
-    <View style={{ ...tw("flex flex-row border border-b-2"), borderColor }}>
+    <View
+      style={{
+        ...tw("flex flex-row border border-b-2"),
+        borderColor,
+        flexGrow: 1,
+      }}
+    >
       <View style={{ ...tw("border-r"), borderColor, width: CODE_W }}>
-        <Text style={tw("text-[8px] font-bold text-center py-1")}>
+        <Text style={tw(`text-[${HEADER_FONT}px] font-bold text-center py-1`)}>
           Subject{"\n"}Code
         </Text>
       </View>
       <View style={{ ...tw("border-r"), borderColor, flex: 1 }}>
-        <Text style={tw("text-[8px] font-bold text-center py-1")}>
+        <Text style={tw(`text-[${HEADER_FONT}px] font-bold text-center py-1`)}>
           Subject Name
         </Text>
       </View>
       <View style={{ ...tw("border-r"), borderColor, width: MARK_W }}>
-        <Text style={tw("text-[8px] font-bold text-center py-1")}>
+        <Text style={tw(`text-[${HEADER_FONT}px] font-bold text-center py-1`)}>
           Full{"\n"}Marks
         </Text>
       </View>
       <View style={{ width: MARK_W }}>
-        <Text style={tw("text-[8px] font-bold text-center py-1")}>
+        <Text style={tw(`text-[${HEADER_FONT}px] font-bold text-center py-1`)}>
           Marks{"\n"}Secured
         </Text>
       </View>
@@ -284,7 +318,7 @@ function calcDivision(
   overriddenSems: Set<string>,
 ): string {
   const allPassed = Object.values(semData).every((sd) =>
-    sd.result?.trim().toLowerCase().startsWith("pass")
+    sd.result?.trim().toLowerCase().startsWith("pass"),
   );
   const pct = effectiveFull > 0 ? (admissible / effectiveFull) * 100 : 0;
   const isFirstDivision = pct >= 60;
@@ -322,11 +356,17 @@ export function ProvisionalMarksheetDocument({
 
   const semesterPairs = leftBlocks.map((left, i) => {
     const right = rightBlocks[i];
-    const maxRows = Math.max(
-      getSubjectRows(left.marksData).length,
-      getSubjectRows(right.marksData).length,
-    );
-    return { left, right, maxRows };
+    const leftItems = buildRowItems(left.marksData);
+    const rightItems = buildRowItems(right.marksData);
+    const rowCount = Math.max(leftItems.length, rightItems.length);
+    return {
+      left,
+      right,
+      leftItems: padRowItems(leftItems, rowCount),
+      rightItems: padRowItems(rightItems, rowCount),
+      leftTotal: getTotal(left.marksData),
+      rightTotal: getTotal(right.marksData),
+    };
   });
 
   const { rawFull, rawSecured, effectiveFull, admissible } =
@@ -410,35 +450,26 @@ export function ProvisionalMarksheetDocument({
             </View>
           </View>
 
-          <View style={tw("flex flex-row")}>
-            <View style={{ flex: 1 }}>
-              <TableHeader />
-              <View>
-                {semesterPairs.map((pair) => (
-                  <SemesterRows
-                    key={pair.left.title}
-                    semester={pair.left}
-                    maxRows={pair.maxRows}
-                  />
-                ))}
-              </View>
+          {semesterPairs.map((pair) => (
+            <View key={pair.left.title}>
+              <PairRow
+                left={<TitleBar title={pair.left.title} />}
+                right={<TitleBar title={pair.right.title} />}
+              />
+              <PairRow left={<TableHeader />} right={<TableHeader />} />
+              {pair.leftItems.map((item, idx) => (
+                <PairRow
+                  key={`${pair.left.title}-${idx}`}
+                  left={<DataRow item={item} />}
+                  right={<DataRow item={pair.rightItems[idx]} />}
+                />
+              ))}
+              <PairRow
+                left={<TotalBar total={pair.leftTotal} />}
+                right={<TotalBar total={pair.rightTotal} />}
+              />
             </View>
-
-            <View style={{ width: 14 }} />
-
-            <View style={{ flex: 1 }}>
-              <TableHeader />
-              <View>
-                {semesterPairs.map((pair) => (
-                  <SemesterRows
-                    key={pair.right.title}
-                    semester={pair.right}
-                    maxRows={pair.maxRows}
-                  />
-                ))}
-              </View>
-            </View>
-          </View>
+          ))}
 
           <Text style={tw("text-[8px] text-center mt-3 mb-3")}>
             Weightage of marks : 50% (1st & 2nd semester) 100% (All other
