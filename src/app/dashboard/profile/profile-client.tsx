@@ -186,7 +186,7 @@ export function ProfileClient({ user, session }: ProfileClientProps) {
               </div>
             </form>
           ) : (
-            <div className="grid gap-4 break-words sm:grid-cols-2">
+            <div className="grid gap-4 wrap-break-word sm:grid-cols-2">
               <div>
                 <p className="text-muted-foreground text-sm font-medium">
                   Name

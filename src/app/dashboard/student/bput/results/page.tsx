@@ -82,41 +82,9 @@ interface SemesterOption {
   label: string;
 }
 
-const SESSION_OPTIONS = [
-  "Even-(2025-26)",
-  "Odd-(2025-26)",
-  "Supplementary 2024-25",
-  "Even-(2024-25)",
-  "Odd-(2024-25)",
-  "Supplementary 2023-24",
-  "Even-(2023-24)",
-  "Odd-(2023-24)",
-  "Supplementary 2022-23",
-  "Even-(2022-23)",
-  "Odd-(2022-23)",
-  "Supplementary 2021-22",
-  "Re-ExamOdd (2021-22)",
-  "Even-(2021-22)",
-  "Odd-(2021-22)",
-  "Supplementary 2020-21",
-  "Even-(2020-21)",
-  "Odd-(2020-21)",
-  "Supplementary 2019-20",
-  "Even-(2019-20)",
-  "Odd-(2019-20)",
-  "Special (2018-19)",
-  "Even-(2018-19)",
-  "Odd-(2018-19)",
-  "Special-(2017-18)",
-  "Even-(2017-18)",
-  "Odd-(2017-18)",
-  "Special-(2016-17)",
-  "Even-(2016-17)",
-  "Odd-(2016-17)",
-  "Special-(2015-16)",
-  "Even-(2015-16)",
-  "Odd-(2015-16)",
-];
+interface ExamSessionsResponse {
+  exam_sessions: string[];
+}
 
 const ORDINAL_SUFFIX: Record<string, string> = {
   "1": "1st",
@@ -137,6 +105,9 @@ export default function Results() {
   const [rollNo, setRollNo] = useState("");
   const [session, setSession] = useState("");
   const [semId, setSemId] = useState("");
+  const [sessionOptions, setSessionOptions] = useState<string[]>([]);
+  const [sessionLoading, setSessionLoading] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const [semesterOptions, setSemesterOptions] =
     useState<SemesterOption[]>(ALL_SEMESTER_OPTIONS);
   const [semLoading, setSemLoading] = useState(false);
@@ -150,6 +121,42 @@ export default function Results() {
   const doOperation = useLimitStore((s) => s.doOperation);
 
   const isRollNoValid = /^\d{10}$/.test(rollNo);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadExamSessions = async () => {
+      setSessionLoading(true);
+      setSessionError(null);
+
+      try {
+        const response = await axios.get<ExamSessionsResponse>(
+          "/api/origin/bput/get-exam-sessions",
+          { withCredentials: true },
+        );
+
+        if (cancelled) return;
+
+        const sessions = response.data?.exam_sessions;
+
+        if (Array.isArray(sessions) && sessions.length > 0) {
+          setSessionOptions(sessions);
+        } else {
+          setSessionError("No exam sessions available");
+        }
+      } catch {
+        if (!cancelled) setSessionError("Failed to load exam sessions");
+      } finally {
+        if (!cancelled) setSessionLoading(false);
+      }
+    };
+
+    loadExamSessions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!isRollNoValid || !session) {
@@ -289,12 +296,23 @@ export default function Results() {
         </div>
 
         <div className="w-full md:max-w-xs">
-          <Select value={session} onValueChange={setSession}>
+          <Select
+            value={session}
+            onValueChange={setSession}
+            disabled={sessionLoading}
+          >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select Session" />
+              {sessionLoading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading sessions...
+                </span>
+              ) : (
+                <SelectValue placeholder="Select Session" />
+              )}
             </SelectTrigger>
             <SelectContent>
-              {SESSION_OPTIONS.map((option) => (
+              {sessionOptions.map((option) => (
                 <SelectItem key={option} value={option}>
                   {option}
                 </SelectItem>
@@ -343,6 +361,13 @@ export default function Results() {
         </div>
       </div>
 
+      {sessionError && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{sessionError}</AlertDescription>
+        </Alert>
+      )}
+
       {error && (
         <Alert variant="destructive" className="mt-4">
           <AlertCircle className="h-4 w-4" />
@@ -371,58 +396,58 @@ export default function Results() {
           <Table className="border-border table-fixed border">
             <TableBody>
               <TableRow>
-                <TableCell className="border-border w-1/2 border font-bold break-words whitespace-normal">
-                  Roll Number
+                <TableCell className="border-border w-1/2 border font-bold wrap-break-word whitespace-normal">
+                  Registration Number
                 </TableCell>
-                <TableCell className="border-border w-1/2 border break-words whitespace-normal">
+                <TableCell className="border-border w-1/2 border wrap-break-word whitespace-normal">
                   {studentInfo.rollNo}
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="border-border w-1/2 border font-bold break-words whitespace-normal">
+                <TableCell className="border-border w-1/2 border font-bold wrap-break-word whitespace-normal">
                   Student Name
                 </TableCell>
-                <TableCell className="border-border w-1/2 border break-words whitespace-normal">
+                <TableCell className="border-border w-1/2 border wrap-break-word whitespace-normal">
                   {studentInfo.studentName}
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="border-border w-1/2 border font-bold break-words whitespace-normal">
+                <TableCell className="border-border w-1/2 border font-bold wrap-break-word whitespace-normal">
                   Batch
                 </TableCell>
-                <TableCell className="border-border w-1/2 border break-words whitespace-normal">
+                <TableCell className="border-border w-1/2 border wrap-break-word whitespace-normal">
                   {studentInfo.batch}
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="border-border w-1/2 border font-bold break-words whitespace-normal">
+                <TableCell className="border-border w-1/2 border font-bold wrap-break-word whitespace-normal">
                   Branch Name
                 </TableCell>
-                <TableCell className="border-border w-1/2 border break-words whitespace-normal">
+                <TableCell className="border-border w-1/2 border wrap-break-word whitespace-normal">
                   {studentInfo.branchName}
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="border-border w-1/2 border font-bold break-words whitespace-normal">
+                <TableCell className="border-border w-1/2 border font-bold wrap-break-word whitespace-normal">
                   Course
                 </TableCell>
-                <TableCell className="border-border w-1/2 border break-words whitespace-normal">
+                <TableCell className="border-border w-1/2 border wrap-break-word whitespace-normal">
                   {studentInfo.courseName}
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="border-border w-1/2 border font-bold break-words whitespace-normal">
+                <TableCell className="border-border w-1/2 border font-bold wrap-break-word whitespace-normal">
                   College Name
                 </TableCell>
-                <TableCell className="border-border w-1/2 border break-words whitespace-normal">
+                <TableCell className="border-border w-1/2 border wrap-break-word whitespace-normal">
                   {studentInfo.collegeName}
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="border-border w-1/2 border font-bold break-words whitespace-normal">
+                <TableCell className="border-border w-1/2 border font-bold wrap-break-word whitespace-normal">
                   College Code
                 </TableCell>
-                <TableCell className="border-border w-1/2 border break-words whitespace-normal">
+                <TableCell className="border-border w-1/2 border wrap-break-word whitespace-normal">
                   {studentInfo.collegeCode}
                 </TableCell>
               </TableRow>
@@ -432,19 +457,19 @@ export default function Results() {
           <Table className="border-border table-fixed border">
             <TableHeader>
               <TableRow className="bg-muted">
-                <TableHead className="border-border w-2/5 border font-bold break-words whitespace-normal">
+                <TableHead className="border-border w-2/5 border font-bold wrap-break-word whitespace-normal">
                   Subject
                 </TableHead>
-                <TableHead className="border-border w-1/6 border text-center font-bold break-words whitespace-normal">
+                <TableHead className="border-border w-1/6 border text-center font-bold wrap-break-word whitespace-normal">
                   Credits
                 </TableHead>
-                <TableHead className="border-border w-1/6 border text-center font-bold break-words whitespace-normal">
+                <TableHead className="border-border w-1/6 border text-center font-bold wrap-break-word whitespace-normal">
                   Grade
                 </TableHead>
-                <TableHead className="border-border w-1/6 border text-center font-bold break-words whitespace-normal">
+                <TableHead className="border-border w-1/6 border text-center font-bold wrap-break-word whitespace-normal">
                   Points
                 </TableHead>
-                <TableHead className="border-border w-1/6 border text-center font-bold break-words whitespace-normal">
+                <TableHead className="border-border w-1/6 border text-center font-bold wrap-break-word whitespace-normal">
                   Credit Pts
                 </TableHead>
               </TableRow>
@@ -452,7 +477,7 @@ export default function Results() {
             <TableBody>
               {resultData.grades.map((subject) => (
                 <TableRow key={subject.subjectCODE}>
-                  <TableCell className="border-border w-2/5 border break-words whitespace-normal">
+                  <TableCell className="border-border w-2/5 border wrap-break-word whitespace-normal">
                     {subject.subjectName}
                     {subject.recheck === 1 && (
                       <span className="text-muted-foreground ml-1 text-xs">
@@ -460,16 +485,16 @@ export default function Results() {
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="border-border w-1/6 border text-center break-words whitespace-normal">
+                  <TableCell className="border-border w-1/6 border text-center wrap-break-word whitespace-normal">
                     {subject.subjectCredits}
                   </TableCell>
-                  <TableCell className="border-border w-1/6 border text-center break-words whitespace-normal">
+                  <TableCell className="border-border w-1/6 border text-center wrap-break-word whitespace-normal">
                     {subject.grade}
                   </TableCell>
-                  <TableCell className="border-border w-1/6 border text-center break-words whitespace-normal">
+                  <TableCell className="border-border w-1/6 border text-center wrap-break-word whitespace-normal">
                     {subject.points}
                   </TableCell>
-                  <TableCell className="border-border w-1/6 border text-center break-words whitespace-normal">
+                  <TableCell className="border-border w-1/6 border text-center wrap-break-word whitespace-normal">
                     {subject.creditPoints}
                   </TableCell>
                 </TableRow>
@@ -477,19 +502,19 @@ export default function Results() {
             </TableBody>
             <TableFooter>
               <TableRow className="bg-muted">
-                <TableCell className="border-border w-2/5 border font-bold break-words whitespace-normal">
+                <TableCell className="border-border w-2/5 border font-bold wrap-break-word whitespace-normal">
                   SGPA
                 </TableCell>
-                <TableCell className="border-border w-1/6 border text-center break-words whitespace-normal">
+                <TableCell className="border-border w-1/6 border text-center wrap-break-word whitespace-normal">
                   {resultData.sgpadetails.credits}
                 </TableCell>
-                <TableCell className="border-border w-1/6 border text-center break-words whitespace-normal">
+                <TableCell className="border-border w-1/6 border text-center wrap-break-word whitespace-normal">
                   -
                 </TableCell>
-                <TableCell className="border-border w-1/6 border text-center break-words whitespace-normal">
+                <TableCell className="border-border w-1/6 border text-center wrap-break-word whitespace-normal">
                   {resultData.sgpadetails.totalGradePoints}
                 </TableCell>
-                <TableCell className="border-border w-1/6 border text-center font-bold break-words whitespace-normal">
+                <TableCell className="border-border w-1/6 border text-center font-bold wrap-break-word whitespace-normal">
                   {resultData.sgpadetails.sgpa}
                 </TableCell>
               </TableRow>
