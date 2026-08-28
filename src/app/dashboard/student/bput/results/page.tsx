@@ -411,14 +411,14 @@ export default function Results() {
                   {studentInfo.studentName}
                 </TableCell>
               </TableRow>
-              <TableRow>
+              {/* <TableRow>
                 <TableCell className="border-border w-1/2 border font-bold wrap-break-word whitespace-normal">
                   Batch
                 </TableCell>
                 <TableCell className="border-border w-1/2 border wrap-break-word whitespace-normal">
                   {studentInfo.batch}
                 </TableCell>
-              </TableRow>
+              </TableRow> */}
               <TableRow>
                 <TableCell className="border-border w-1/2 border font-bold wrap-break-word whitespace-normal">
                   Branch Name
@@ -443,14 +443,14 @@ export default function Results() {
                   {studentInfo.collegeName}
                 </TableCell>
               </TableRow>
-              <TableRow>
+              {/* <TableRow>
                 <TableCell className="border-border w-1/2 border font-bold wrap-break-word whitespace-normal">
                   College Code
                 </TableCell>
                 <TableCell className="border-border w-1/2 border wrap-break-word whitespace-normal">
                   {studentInfo.collegeCode}
                 </TableCell>
-              </TableRow>
+              </TableRow> */}
             </TableBody>
           </Table>
 
