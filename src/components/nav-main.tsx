@@ -1,8 +1,8 @@
-// components/nav-main.tsx
 "use client";
 
-import { ChevronRight, type LucideIcon } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { iconMap } from "@/lib/icon-map";
 import {
   Collapsible,
@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/collapsible";
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -37,6 +36,40 @@ export function NavMain({
 }) {
   const pathname = usePathname();
 
+  const buildOpenState = () => {
+    const state: Record<string, boolean> = {};
+    for (const item of items) {
+      if (!item.items?.length) continue;
+      const hasActiveSubItem = item.items.some(
+        (subItem) => pathname === subItem.url,
+      );
+      state[item.title] = hasActiveSubItem || pathname === item.url;
+    }
+    return state;
+  };
+
+  const [openState, setOpenState] =
+    useState<Record<string, boolean>>(buildOpenState);
+
+  useEffect(() => {
+    setOpenState((prev) => {
+      const next = { ...prev };
+      for (const item of items) {
+        if (!item.items?.length) continue;
+        const hasActiveSubItem = item.items.some(
+          (subItem) => pathname === subItem.url,
+        );
+        if (hasActiveSubItem || pathname === item.url) {
+          next[item.title] = true;
+        }
+      }
+      return next;
+    });
+  }, [pathname, items]);
+
+  const toggle = (title: string) =>
+    setOpenState((prev) => ({ ...prev, [title]: !prev[title] }));
+
   return (
     <SidebarGroup>
       <SidebarMenu>
@@ -44,9 +77,6 @@ export function NavMain({
           const Icon = item.icon ? iconMap[item.icon] : null;
           const hasSubItems = item.items && item.items.length > 0;
           const isItemActive = pathname === item.url;
-          const hasActiveSubItem = item.items?.some(
-            (subItem) => pathname === subItem.url,
-          );
 
           if (!hasSubItems) {
             return (
@@ -65,11 +95,14 @@ export function NavMain({
             );
           }
 
+          const isOpen = !!openState[item.title];
+
           return (
             <Collapsible
               key={item.title}
               asChild
-              defaultOpen={item.isActive || hasActiveSubItem}
+              open={isOpen}
+              onOpenChange={() => toggle(item.title)}
               className="group/collapsible"
             >
               <SidebarMenuItem>
