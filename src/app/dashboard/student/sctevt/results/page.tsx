@@ -370,7 +370,9 @@ export default function Results() {
 
           <div className="w-full text-center">
             <p className="text-muted-foreground text-xs">
-              *All information shown here is based on the SCTEVT Result API.
+              * Results are fetched directly from the official SCTEVT public API
+              and displayed as-is. This tool is not affiliated with or endorsed
+              by SCTEVT or any institution.
             </p>
           </div>
         </div>

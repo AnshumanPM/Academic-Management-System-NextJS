@@ -523,7 +523,9 @@ export default function Results() {
 
           <div className="w-full text-center">
             <p className="text-muted-foreground text-xs">
-              *All information shown here is based on the BPUT Result API.
+              * Results are fetched directly from the official BPUT public API
+              and displayed as-is. This tool is not affiliated with or endorsed
+              by BPUT or any institution.
             </p>
           </div>
         </div>

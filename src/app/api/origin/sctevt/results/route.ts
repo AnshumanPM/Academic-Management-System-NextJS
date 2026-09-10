@@ -37,7 +37,7 @@ async function getOriginResData(
 ) {
   try {
     const response = await axios.get(
-      "https://sctevt-dashboard.anshumanpm.in/get_marks_info",
+      "https://sctevt-dashboard.zdns.in/get_marks_info",
       {
         params: { regd: rollNo, sem: sem, ymcode: examCode },
         headers: {

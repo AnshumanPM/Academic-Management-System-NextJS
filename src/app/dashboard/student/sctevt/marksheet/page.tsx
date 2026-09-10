@@ -265,6 +265,11 @@ export default function MarksheetPage() {
             examLabel={viewerPayload.examLabel}
             semester={viewerPayload.semester}
           />
+          <p className="text-muted-foreground mt-4 text-center text-xs">
+            * Results are fetched directly from the official SCTEVT public API
+            and displayed as-is. This tool is not affiliated with or endorsed by
+            SCTEVT or any institution.
+          </p>
         </div>
       )}
     </div>

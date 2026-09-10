@@ -56,12 +56,6 @@ export function MarksheetViewer({
         showTextLayer={true}
         showAnnotationLayer={false}
       />
-      <div className="mt-4 w-full">
-        <p className="text-muted-foreground text-center text-xs">
-          *This marksheet is generated for reference purposes only and is not an
-          official document.
-        </p>
-      </div>
     </div>
   );
 }
