@@ -299,11 +299,17 @@ export default function MarksheetPage() {
       {provisionalData && (
         <div className="mt-6">
           <ProvisionalMarksheetViewer data={provisionalData} />
-          <p className="text-muted-foreground mt-4 text-center text-xs">
-            * Results are fetched directly from the official SCTEVT public API
-            and displayed as-is. This tool is not affiliated with or endorsed by
-            SCTEVT or any institution.
-          </p>
+          <div className="mt-4 flex flex-col items-center gap-1 text-center">
+            <p className="text-muted-foreground text-xs">
+              * This marksheet is only for reference purpose &amp; its not an
+              official valid marksheet.
+            </p>
+            <p className="text-muted-foreground text-xs">
+              * Results are fetched directly from the official SCTEVT public API
+              and displayed as-is. This tool is not affiliated with or endorsed
+              by SCTEVT or any institution.
+            </p>
+          </div>
         </div>
       )}
     </div>
