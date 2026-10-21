@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
-import NextTopLoader from "nextjs-toploader";
+import { TopLoader } from "@/components/top-loader";
 import Script from "next/script";
 
 const geistSans = Geist({
@@ -29,7 +29,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-FBDRF1KF49"
           strategy="afterInteractive"
@@ -42,7 +41,6 @@ export default function RootLayout({
             gtag('config', 'G-FBDRF1KF49');
           `}
         </Script>
-        {/* Microsoft Clarity */}
         <Script id="microsoft-clarity" strategy="afterInteractive">
           {`
             (function(c,l,a,r,i,t,y){
@@ -64,11 +62,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <NextTopLoader
-            color="var(--primary)"
-            height={3}
-            showSpinner={false}
-          />
+          <TopLoader />
           {children}
           <Toaster />
         </ThemeProvider>

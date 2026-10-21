@@ -17,7 +17,7 @@ import * as schema from "@/db/auth-schema";
 import { ac, roleObjects, ROLES } from "@/lib/permissions";
 import { sendTelegramMessage } from "@/lib/helper";
 
-const resend = new Resend(process.env.RESEND_API_KEY as string);
+const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy");
 
 export const auth = betterAuth({
   emailAndPassword: {
