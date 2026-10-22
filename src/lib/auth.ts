@@ -16,111 +16,160 @@ import { db } from "@/db/drizzle";
 import * as schema from "@/db/auth-schema";
 import { ac, roleObjects, ROLES } from "@/lib/permissions";
 import { sendTelegramMessage } from "@/lib/helper";
+import { env } from "cloudflare:workers";
 
-const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy");
+function createAuth() {
+  const secret = env?.BETTER_AUTH_SECRET ?? process.env.BETTER_AUTH_SECRET;
+  const baseURL = env?.BETTER_AUTH_URL ?? process.env.BETTER_AUTH_URL;
+  const resendApiKey =
+    env?.RESEND_API_KEY ?? process.env.RESEND_API_KEY ?? "re_dummy";
+  const resend = new Resend(resendApiKey);
 
-export const auth = betterAuth({
-  emailAndPassword: {
-    enabled: true,
-    requireEmailVerification: true,
-    sendResetPassword: async ({ user, url }) => {
-      console.log("Reset password URL:", url);
-      await resend.emails.send({
-        from: `${process.env.EMAIL_SENDER_NAME} <${process.env.EMAIL_SENDER_ADDRESS}>`,
-        to: user.email,
-        subject: "Reset your password",
-        react: ForgotPasswordEmail({
-          username: user.name,
-          resetUrl: url,
-          userEmail: user.email,
-        }),
-      });
-    },
-  },
-  emailVerification: {
-    sendVerificationEmail: async ({ user, url }) => {
-      console.log("Verify email URL:", url);
-      await resend.emails.send({
-        from: `${process.env.EMAIL_SENDER_NAME} <${process.env.EMAIL_SENDER_ADDRESS}>`,
-        to: user.email,
-        subject: "Verify your email",
-        react: VerifyEmail({ username: user.name, verifyUrl: url }),
-      });
-    },
-    sendOnSignUp: true,
-    autoSignInAfterVerification: true,
-  },
-  socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-    },
-    github: {
-      clientId: process.env.GITHUB_CLIENT_ID as string,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
-    },
-  },
-  database: drizzleAdapter(db, {
-    provider: "pg",
-    schema,
-  }),
-  session: {
-    cookieCache: {
+  return betterAuth({
+    secret,
+    baseURL,
+    emailAndPassword: {
       enabled: true,
-      maxAge: 60 * 5,
-      strategy: "jwt",
-    },
-  },
-  hooks: {
-    before: createAuthMiddleware(async (ctx) => {
-      if (ctx.path !== "/sign-up/email") {
-        return;
-      }
-      if (!ctx.body?.email.endsWith("@gmail.com")) {
-        throw new APIError("BAD_REQUEST", {
-          message: "Email must end with @gmail.com",
+      requireEmailVerification: true,
+      sendResetPassword: async ({ user, url }) => {
+        console.log("Reset password URL:", url);
+        const emailSenderName =
+          env?.EMAIL_SENDER_NAME ?? process.env.EMAIL_SENDER_NAME;
+        const emailSenderAddress =
+          env?.EMAIL_SENDER_ADDRESS ?? process.env.EMAIL_SENDER_ADDRESS;
+        await resend.emails.send({
+          from: `${emailSenderName} <${emailSenderAddress}>`,
+          to: user.email,
+          subject: "Reset your password",
+          react: ForgotPasswordEmail({
+            username: user.name,
+            resetUrl: url,
+            userEmail: user.email,
+          }),
         });
-      }
-    }),
-    after: createAuthMiddleware(async (ctx) => {
-      if (
-        ctx.path.startsWith("/sign-up") ||
-        ctx.path.startsWith("/sign-in") ||
-        ctx.path.startsWith("/callback")
-      ) {
-        const newSession = ctx.context.newSession;
-        if (newSession) {
-          const user = newSession.user;
-          const imageLink = user.image
-            ? `<a href="${user.image}">Here</a>`
-            : "No image";
-          const message = `<b>New ${ctx.path.startsWith("/sign-up") ? "Sign Up" : "Sign In"}</b>\n\n<b>Name:</b> ${user.name}\n<b>Email:</b> ${user.email}\n<b>Picture:</b> ${imageLink}`;
-          await sendTelegramMessage(message);
-        }
-      }
-    }),
-  },
-  plugins: [
-    admin({
-      ac,
-      roleObjects,
-      defaultRole: ROLES.USER,
-      adminRoles: ROLES.ADMIN,
-    }),
-    username(),
-    lastLoginMethod(),
-    oneTap(),
-    nextCookies(),
-    captcha({
-      provider: "cloudflare-turnstile",
-      secretKey: process.env.TURNSTILE_SECRET_KEY!,
-    }),
-  ],
-  advanced: {
-    ipAddress: {
-      ipAddressHeaders: ["cf-connecting-ip", "x-real-ip", "x-forwarded-for"],
-      disableIpTracking: false,
+      },
     },
-    cookiePrefix: "AMS_AUTH",
+    emailVerification: {
+      sendVerificationEmail: async ({ user, url }) => {
+        console.log("Verify email URL:", url);
+        const emailSenderName =
+          env?.EMAIL_SENDER_NAME ?? process.env.EMAIL_SENDER_NAME;
+        const emailSenderAddress =
+          env?.EMAIL_SENDER_ADDRESS ?? process.env.EMAIL_SENDER_ADDRESS;
+        await resend.emails.send({
+          from: `${emailSenderName} <${emailSenderAddress}>`,
+          to: user.email,
+          subject: "Verify your email",
+          react: VerifyEmail({ username: user.name, verifyUrl: url }),
+        });
+      },
+      sendOnSignUp: true,
+      autoSignInAfterVerification: true,
+    },
+    socialProviders: {
+      google: {
+        clientId: (env?.GOOGLE_CLIENT_ID ??
+          process.env.GOOGLE_CLIENT_ID) as string,
+        clientSecret: (env?.GOOGLE_CLIENT_SECRET ??
+          process.env.GOOGLE_CLIENT_SECRET) as string,
+      },
+      github: {
+        clientId: (env?.GITHUB_CLIENT_ID ??
+          process.env.GITHUB_CLIENT_ID) as string,
+        clientSecret: (env?.GITHUB_CLIENT_SECRET ??
+          process.env.GITHUB_CLIENT_SECRET) as string,
+      },
+    },
+    database: drizzleAdapter(db, {
+      provider: "pg",
+      schema,
+    }),
+    session: {
+      cookieCache: {
+        enabled: true,
+        maxAge: 60 * 5,
+        strategy: "jwt",
+      },
+    },
+    hooks: {
+      before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path !== "/sign-up/email") {
+          return;
+        }
+        if (!ctx.body?.email.endsWith("@gmail.com")) {
+          throw new APIError("BAD_REQUEST", {
+            message: "Email must end with @gmail.com",
+          });
+        }
+      }),
+      after: createAuthMiddleware(async (ctx) => {
+        if (
+          ctx.path.startsWith("/sign-up") ||
+          ctx.path.startsWith("/sign-in") ||
+          ctx.path.startsWith("/callback")
+        ) {
+          const newSession = ctx.context.newSession;
+          if (newSession) {
+            const user = newSession.user;
+            const imageLink = user.image
+              ? `<a href="${user.image}">Here</a>`
+              : "No image";
+            const message = `<b>New ${ctx.path.startsWith("/sign-up") ? "Sign Up" : "Sign In"}</b>\n\n<b>Name:</b> ${user.name}\n<b>Email:</b> ${user.email}\n<b>Picture:</b> ${imageLink}`;
+            await sendTelegramMessage(message);
+          }
+        }
+      }),
+    },
+    plugins: [
+      admin({
+        ac,
+        roleObjects,
+        defaultRole: ROLES.USER,
+        adminRoles: ROLES.ADMIN,
+      }),
+      username(),
+      lastLoginMethod(),
+      oneTap(),
+      nextCookies(),
+      captcha({
+        provider: "cloudflare-turnstile",
+        secretKey: (env?.TURNSTILE_SECRET_KEY ??
+          process.env.TURNSTILE_SECRET_KEY)!,
+      }),
+    ],
+    advanced: {
+      database: {
+        validateSchema: false,
+      },
+      ipAddress: {
+        ipAddressHeaders: ["cf-connecting-ip", "x-real-ip", "x-forwarded-for"],
+        disableIpTracking: false,
+      },
+      cookiePrefix: "AMS_AUTH",
+    },
+  });
+}
+
+let _auth: ReturnType<typeof createAuth> | null = null;
+
+export function getAuth() {
+  if (!_auth) {
+    _auth = createAuth();
+  }
+  return _auth;
+}
+
+export const auth = new Proxy({} as ReturnType<typeof createAuth>, {
+  get(_target, prop, receiver) {
+    const instance = getAuth();
+    const value = Reflect.get(instance, prop, receiver);
+    if (typeof value === "function") {
+      return value.bind(instance);
+    }
+    return value;
+  },
+  has(_target, prop) {
+    const instance = getAuth();
+    return Reflect.has(instance, prop);
   },
 });

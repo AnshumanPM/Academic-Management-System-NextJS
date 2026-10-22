@@ -7,6 +7,9 @@ export default defineConfig({
   worker: defineWorker({
     ...workersCache,
     name: "results-app",
+    domains: ["ams.zdns.in"],
+    workersDev: true,
+    previewUrls: true,
     entrypoint: "vinext/server/fetch-handler",
     compatibilityDate: "2026-10-21",
     compatibilityFlags: ["nodejs_compat"],
@@ -37,6 +40,9 @@ export default defineConfig({
       ASSETS: bindings.assets(),
       IMAGES: bindings.images(),
       ...workersCache.env,
+      HYPERDRIVE: bindings.hyperdrive({
+        id: "5e1b40758fc8454cb612db669d95b0b4",
+      }),
       BETTER_AUTH_SECRET: bindings.secret(),
       BETTER_AUTH_URL: bindings.secret(),
       DATABASE_URL: bindings.secret(),

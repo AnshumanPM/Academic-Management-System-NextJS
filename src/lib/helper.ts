@@ -1,8 +1,10 @@
+import { env } from "cloudflare:workers";
+
 export async function sendTelegramMessage(
   text: string,
   chatId: string = "-1002250964229",
 ) {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const botToken = env?.TELEGRAM_BOT_TOKEN ?? process.env.TELEGRAM_BOT_TOKEN;
 
   if (!botToken) {
     console.error("TELEGRAM_BOT_TOKEN is not set in environment variables");
