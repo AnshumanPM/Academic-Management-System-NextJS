@@ -15,6 +15,24 @@ export default defineConfig({
       notFoundHandling: "none",
       runWorkerFirst: ["/*", "!/_next/static/*", "!/*/_next/static/*"],
     },
+    observability: {
+      enabled: true,
+      headSamplingRate: 1,
+      logs: {
+        enabled: true,
+        headSamplingRate: 1,
+        invocationLogs: true,
+        persist: true,
+      },
+      traces: {
+        enabled: true,
+        headSamplingRate: 1,
+        persist: true,
+      },
+      issues: {
+        enabled: true,
+      },
+    },
     env: {
       ASSETS: bindings.assets(),
       IMAGES: bindings.images(),
