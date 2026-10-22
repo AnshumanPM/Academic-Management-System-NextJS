@@ -1,7 +1,11 @@
 import { bindings, defineConfig, defineWorker } from "cf/config";
+import { createWorkersCacheConfig } from "@vinext/cloudflare/cache/config";
+
+const workersCache = await createWorkersCacheConfig();
 
 export default defineConfig({
   worker: defineWorker({
+    ...workersCache,
     name: "results-app",
     entrypoint: "vinext/server/fetch-handler",
     compatibilityDate: "2026-10-21",
@@ -13,6 +17,8 @@ export default defineConfig({
     },
     env: {
       ASSETS: bindings.assets(),
+      IMAGES: bindings.images(),
+      ...workersCache.env,
       BETTER_AUTH_SECRET: bindings.secret(),
       BETTER_AUTH_URL: bindings.secret(),
       DATABASE_URL: bindings.secret(),
@@ -31,6 +37,9 @@ export default defineConfig({
       NEXT_PUBLIC_POSTHOG_HOST: bindings.secret(),
       TURNSTILE_SECRET_KEY: bindings.secret(),
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: bindings.secret(),
+    },
+    exports: {
+      ...workersCache.exports,
     },
   }),
 });
