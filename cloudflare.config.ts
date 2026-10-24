@@ -18,6 +18,13 @@ export default defineConfig({
       notFoundHandling: "none",
       runWorkerFirst: ["/*", "!/_next/static/*", "!/*/_next/static/*"],
     },
+    cache: {
+      enabled: true,
+    },
+    placement: {
+      mode: "targeted",
+      region: "aws:ap-southeast-1",
+    },
     observability: {
       enabled: true,
       headSamplingRate: 1,
